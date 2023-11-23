@@ -102,7 +102,7 @@ class Store {
         inventory.add(new Bike("Kid's Bike", BikeCategory.BMX_BIKE, 89.99));
         inventory.add(new Bike("Kid's Bike", BikeCategory.CRUISER_BIKE, 109.99));
         // Add bikes to the database
-//1
+
        // for (Bike bike : inventory) {
        //     try {
        //         PreparedStatement stmt = conn.prepareStatement("INSERT INTO BikeInventory (BikeMake, BikeModel, Price) VALUES (?, ?, ?)");
@@ -185,7 +185,7 @@ class Store {
         //     stmt.setString(2, selectedBike.getCategory().toString());
         //     stmt.setDouble(3, selectedBike.getPrice());
 
-//2
+
         //     stmt.executeUpdate();
         // } catch (SQLException e) {
         //     e.printStackTrace();
