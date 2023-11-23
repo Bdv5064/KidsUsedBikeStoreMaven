@@ -341,7 +341,4 @@ class Bike {
                 ", price= " + price +
                 '}';
     }
-
-
-
 }
