@@ -2,78 +2,45 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
-import java.lang.Object;
 
-public class Main {
+public class Main2 {
 
     public static void main(String[] args) {
 
         try {
             // Establish a connection
-           Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "SQLW@ta$h!#914");
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "SQLW@ta$h!#914");
 
             // Create a statement
-           // Statement stmt = conn.createStatement();
+            Statement stmt = conn.createStatement();
 
-            // SQL statement for creating a new table
-          //  String sql = "CREATE TABLE IF NOT EXISTS Customer (" +
-          //          "CustID INT PRIMARY KEY, " +
-          //          "FName VARCHAR(255), " +
-          //          "LName VARCHAR(255), " +
-          //          "EMail VARCHAR(255), " +
-          //         "Phone VARCHAR(255), " +
-           //         "Address VARCHAR(255)" +
-          //          ");";
-          //  stmt.execute(sql);
+            // SQL statement for creating a new table (CustomerDetails)
+            String createCustomerTable = "CREATE TABLE IF NOT EXISTS CustomerDetails (" +
+                    "CustID INT PRIMARY KEY AUTO_INCREMENT, " +
+                    "FName VARCHAR(255), " +
+                    "LName VARCHAR(255), " +
+                    "EMail VARCHAR(255), " +
+                    "Phone VARCHAR(255), " +
+                    "Address VARCHAR(255)" +
+                    ");";
+            stmt.execute(createCustomerTable);
 
-          //  sql = "CREATE TABLE IF NOT EXISTS BikeInventory (" +
-          //          "BikeID INT PRIMARY KEY, " +
-          //          "BikeMake VARCHAR(255), " +
-          //          "BikeModel VARCHAR(255), " +
-          //          "Price DECIMAL(10, 2)" +
-          //          ");";
-           // stmt.execute(sql);
+            // SQL statement for creating another table (OrderDetails) with foreign key referencing Customer(CustID)
+            String createOrdersTable = "CREATE TABLE IF NOT EXISTS OrderDetails (" +
+                    "OrderID INT PRIMARY KEY AUTO_INCREMENT, " +
+                    "BikeID INT, " +
+                    "CustID INT, " +
+                    "DateOfPurchase DATE, " +
+                    "TotalPrice DECIMAL(10, 2), " +
+                    "FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)" +
+                    ");";
+            stmt.execute(createOrdersTable);
 
-          //  sql = "CREATE TABLE IF NOT EXISTS Orders (" +
-          //          "OrderID INT PRIMARY KEY, " +
-          //          "BikeID INT, " +
-          //          "CustID INT, " +
-           //         "DateOfPurchase DATE, " +
-          //          "TotalPrice DECIMAL(10, 2), " +
-           //         "FOREIGN KEY (BikeID) REFERENCES BikeInventory(BikeID)" +
-          //          ");";
-          //  stmt.execute(sql);
-
-         //   sql = "CREATE TABLE IF NOT EXISTS OrderDetails (" +
-         //           "OrderID INT PRIMARY KEY, " +
-         //           "CustID INT, " +
-         //           "FName VARCHAR(255), " +
-         //           "LName VARCHAR(255), " +
-         //           "DateOfPurchase DATE, " +
-         //           "BikeMake VARCHAR(255), " +
-         //           "BikeModel VARCHAR(255), " +
-         //           "Price DECIMAL(10, 2), " +
-        //            "TotalPrice DECIMAL(10, 2), " +
-         //           "FOREIGN KEY (CustID) REFERENCES Customer(CustID)" +
-         //           ");";
-         //   stmt.execute(sql);
-
-         //   sql = "CREATE TABLE IF NOT EXISTS CustomerLogin (" +
-         //           "CustID INT PRIMARY KEY, " +
-         //           "Email VARCHAR(255), " +
-         //           "Password VARCHAR(24), " +
-         //           "FOREIGN KEY (CustID) REFERENCES Customer(CustID)" +
-         //           ");";
-         //   stmt.execute(sql);
-
-         //   System.out.println("Tables created successfully");
+            System.out.println("Tables created successfully");
 
             Store store = new Store(conn);
             store.welcome();
@@ -97,23 +64,22 @@ class Store {
     public Store(Connection conn) {
         this.conn = conn;
         // Hardcode products into the inventory
-        inventory.add(new Bike("Kid's Bike", BikeCategory.MOUNTAIN_BIKE, 149.99));
-        inventory.add(new Bike("Kid's Bike", BikeCategory.ROAD_BIKE, 129.99));
-        inventory.add(new Bike("Kid's Bike", BikeCategory.BMX_BIKE, 89.99));
-        inventory.add(new Bike("Kid's Bike", BikeCategory.CRUISER_BIKE, 109.99));
+        inventory.add(new Bike("Kid's Bike: Mountain Bike", BikeCategory.MOUNTAIN_BIKE, 149.99));
+        inventory.add(new Bike("Kid's Bike: Road Bike", BikeCategory.ROAD_BIKE, 129.99));
+        inventory.add(new Bike("Kid's Bike: BMX Bike", BikeCategory.BMX_BIKE, 89.99));
+        inventory.add(new Bike("Kid's Bike: Cruiser Bike", BikeCategory.CRUISER_BIKE, 109.99));
         // Add bikes to the database
-
-       // for (Bike bike : inventory) {
-       //     try {
-       //         PreparedStatement stmt = conn.prepareStatement("INSERT INTO BikeInventory (BikeMake, BikeModel, Price) VALUES (?, ?, ?)");
-       //         stmt.setString(1, bike.getName());
-       //         stmt.setString(2, bike.getCategory().toString());
-       //         stmt.setDouble(3, bike.getPrice());
-       //         stmt.executeUpdate();
-        //    } catch (SQLException e) {
-         //       e.printStackTrace();
-         //   }
-       // }
+        for (Bike bike : inventory) {
+            try {
+                PreparedStatement stmt = conn.prepareStatement("INSERT INTO BikeInventory (BikeMake, BikeModel, Price) VALUES (?, ?, ?)");
+                stmt.setString(1, bike.getName());
+                stmt.setString(2, bike.getCategory().toString());
+                stmt.setDouble(3, bike.getPrice());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void welcome() {
@@ -123,13 +89,46 @@ class Store {
 
     public void signUp() {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter name: ");
-        String name = scanner.nextLine();
+        System.out.print("Enter first name: ");
+        String fName = scanner.nextLine();
+        System.out.print("Enter last name: ");
+        String lName = scanner.nextLine();
         System.out.print("Enter email: ");
         String email = scanner.nextLine();
-        currentCustomer = new Customer(name, email);
+        System.out.print("Enter phone: ");
+        String phone = scanner.nextLine();
+        System.out.print("Enter address: ");
+        String address = scanner.nextLine();
+
+        // Insert customer information into the Customer Details table
+        try {
+            String insertCustomerQuery = "INSERT INTO Customer Details (FName, LName, EMail, Phone, Address) VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement stmt = conn.prepareStatement(insertCustomerQuery, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, fName);
+                stmt.setString(2, lName);
+                stmt.setString(3, email);
+                stmt.setString(4, phone);
+                stmt.setString(5, address);
+                stmt.executeUpdate();
+
+                // Get the generated customer ID
+                int generatedCustomerId;
+                try (var rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        generatedCustomerId = rs.getInt(1);
+                        System.out.println("Customer ID: " + generatedCustomerId);
+                    } else {
+                        throw new SQLException("Creating customer failed, no ID obtained.");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        currentCustomer = new Customer(fName, lName, email, phone, address);
         customers.add(currentCustomer);
-        System.out.println("Sign-up successful! Welcome, " + name + "!");
+        System.out.println("Sign-up successful! Welcome, " + fName + "!");
     }
 
     public void displayInventory() {
@@ -178,30 +177,30 @@ class Store {
             transaction = new Block(0, null, null, null, 0.00);
             blockchain.addBlock(transaction);
 
-        // Remove the purchased bike from the database
-        // try {
-        //     PreparedStatement stmt = conn.prepareStatement("DELETE FROM BikeInventory WHERE BikeMake = ? AND BikeModel = ? AND Price = ?");
-        //     stmt.setString(1, selectedBike.getName());
-        //     stmt.setString(2, selectedBike.getCategory().toString());
-        //     stmt.setDouble(3, selectedBike.getPrice());
+            // Remove the purchased bike from the database
+            // try {
+            //     PreparedStatement stmt = conn.prepareStatement("DELETE FROM BikeInventory WHERE BikeMake = ? AND BikeModel = ? AND Price = ?");
+            //     stmt.setString(1, selectedBike.getName());
+            //     stmt.setString(2, selectedBike.getCategory().toString());
+            //     stmt.setDouble(3, selectedBike.getPrice());
 
 
-        //     stmt.executeUpdate();
-        // } catch (SQLException e) {
-        //     e.printStackTrace();
-        // }
-        // Print receipt
-        System.out.println("Receipt:");
-        System.out.println("Customer: " + currentCustomer.getName());
-        System.out.println("Email: " + currentCustomer.getEmail());
-        System.out.println("Bike Purchased: " + selectedBike.getName());
-        System.out.println("Category: " + selectedBike.getCategory());
-        System.out.println("Price: $" + selectedBike.getPrice());
-        System.out.println("Total Price: $" + totalPrice);
-        System.out.println("Payment: $" + payment);
-        System.out.println("Change: $" + change);
-        System.out.println("Transaction Hash: " + transaction.getHash());
-    } else {
+            //     stmt.executeUpdate();
+            // } catch (SQLException e) {
+            //     e.printStackTrace();
+            // }
+            // Print receipt
+            System.out.println("Receipt:");
+            System.out.println("Customer: " + currentCustomer.getName());
+            System.out.println("Email: " + currentCustomer.getEmail());
+            System.out.println("Bike Purchased: " + selectedBike.getName());
+            System.out.println("Category: " + selectedBike.getCategory());
+            System.out.println("Price: $" + selectedBike.getPrice());
+            System.out.println("Total Price: $" + totalPrice);
+            System.out.println("Payment: $" + payment);
+            System.out.println("Change: $" + change);
+            System.out.println("Transaction Hash: " + transaction.getHash());
+        } else {
             System.out.println("Insufficient payment. Please pay the full amount.");
         }
     }
@@ -216,16 +215,7 @@ class Store {
             returnedBike = inventory.get(returnChoice - 1);
             totalPrice -= returnedBike.getPrice();
             System.out.println("You've returned " + returnedBike.getName() + ". Refund amount: $" + returnedBike.getPrice());
-            // Add the returned bike back to the database
-            //try {
-             //   PreparedStatement stmt = conn.prepareStatement("INSERT INTO BikeInventory (BikeMake, BikeModel, Price) VALUES (?, ?, ?)");
-             //   stmt.setString(1, returnedBike.getName());
-             //   stmt.setString(2, returnedBike.getCategory().toString());
-             //   stmt.setDouble(3, returnedBike.getPrice());
-            //    stmt.executeUpdate();
-            //} catch (SQLException e) {
-           //     e.printStackTrace();
-           // }
+
         } else {
             System.out.println("Invalid. Please select a valid number.");
         }
@@ -250,7 +240,7 @@ class Store {
             this.email = email;
         }
 
-        public Customer(String name, String email) {
+        public Customer(String fName, String lName, String s, String name, String email) {
             this.name = name;
             this.email = email;
 
