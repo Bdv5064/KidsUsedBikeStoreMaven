@@ -1,8 +1,12 @@
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 import java.lang.Object;
@@ -84,7 +88,7 @@ public class Main {
 
 class Store {
     private final List<Bike> inventory = new ArrayList<>();
-    private double totalPrice = 0;
+    private double totalPrice = 0.00;
     private Customer currentCustomer;
     private final List<Customer> customers = new ArrayList<>();
     private final Blockchain blockchain = new Blockchain();
@@ -98,6 +102,7 @@ class Store {
         inventory.add(new Bike("Kid's Bike", BikeCategory.BMX_BIKE, 89.99));
         inventory.add(new Bike("Kid's Bike", BikeCategory.CRUISER_BIKE, 109.99));
         // Add bikes to the database
+//1
        // for (Bike bike : inventory) {
        //     try {
        //         PreparedStatement stmt = conn.prepareStatement("INSERT INTO BikeInventory (BikeMake, BikeModel, Price) VALUES (?, ?, ?)");
@@ -163,32 +168,40 @@ class Store {
         double change = payment - totalPrice;
         // Round the change to 2 decimal places
         change = Math.round(change * 100.0) / 100.0;
-        if (change >= 0) {
-            System.out.println("Change: $" + change);
-            Block transaction = new Block(currentCustomer, selectedBike, totalPrice);
+        Block transaction = null;
+        if (currentCustomer == null) {
+            System.out.println("Please sign up before making a purchase.");
+            signUp();
+        }
+        if (change >= 0) {            System.out.println("Change: $" + change);
+            // Create a new block for the transaction
+            transaction = new Block(0, null, null, null, 0.00);
             blockchain.addBlock(transaction);
-            // Remove the purchased bike from the database
-           // try {
-           //     PreparedStatement stmt = conn.prepareStatement("DELETE FROM BikeInventory WHERE BikeMake = ? AND BikeModel = ? AND Price = ?");
-           //     stmt.setString(1, selectedBike.getName());
-           //     stmt.setString(2, selectedBike.getCategory().toString());
-           //     stmt.setDouble(3, selectedBike.getPrice());
-           //     stmt.executeUpdate();
-           // } catch (SQLException e) {
-           //     e.printStackTrace();
-           // }
-            // Print receipt
-            System.out.println("Receipt:");
-            System.out.println("Customer: " + currentCustomer.getName());
-            System.out.println("Email: " + currentCustomer.getEmail());
-            System.out.println("Bike Purchased: " + selectedBike.getName());
-            System.out.println("Category: " + selectedBike.getCategory());
-            System.out.println("Price: $" + selectedBike.getPrice());
-            System.out.println("Total Price: $" + totalPrice);
-            System.out.println("Payment: $" + payment);
-            System.out.println("Change: $" + change);
-            System.out.println("Transaction Hash: " + transaction.getHash());
-        } else {
+
+        // Remove the purchased bike from the database
+        // try {
+        //     PreparedStatement stmt = conn.prepareStatement("DELETE FROM BikeInventory WHERE BikeMake = ? AND BikeModel = ? AND Price = ?");
+        //     stmt.setString(1, selectedBike.getName());
+        //     stmt.setString(2, selectedBike.getCategory().toString());
+        //     stmt.setDouble(3, selectedBike.getPrice());
+
+//2
+        //     stmt.executeUpdate();
+        // } catch (SQLException e) {
+        //     e.printStackTrace();
+        // }
+        // Print receipt
+        System.out.println("Receipt:");
+        System.out.println("Customer: " + currentCustomer.getName());
+        System.out.println("Email: " + currentCustomer.getEmail());
+        System.out.println("Bike Purchased: " + selectedBike.getName());
+        System.out.println("Category: " + selectedBike.getCategory());
+        System.out.println("Price: $" + selectedBike.getPrice());
+        System.out.println("Total Price: $" + totalPrice);
+        System.out.println("Payment: $" + payment);
+        System.out.println("Change: $" + change);
+        System.out.println("Transaction Hash: " + transaction.getHash());
+    } else {
             System.out.println("Insufficient payment. Please pay the full amount.");
         }
     }
@@ -252,7 +265,7 @@ class Blockchain {
     public Blockchain() {
         chain = new ArrayList<>();
         // Add the genesis block
-        chain.add(new Block(null, null, 0));
+        chain.add(new Block(0, null, null, null, 0));
     }
 
     public void addBlock(Block block) {
@@ -269,26 +282,59 @@ class Blockchain {
 
 class Block {
     private final Store.Customer customer;
+    private int index;
+    private long timestamp;
     private final Bike bike;
     private final double totalPrice;
     private String previousHash;
     private String hash;
 
-    public Block(Store.Customer currentCustomer, Bike selectedBike, double totalPrice) {
-
+    public Block(int index, String previousHash, Store.Customer currentCustomer, Bike selectedBike, double totalPrice) {
+        this.index = index;
+        this.timestamp = new Date().getTime();
         this.customer = currentCustomer;
         this.bike = selectedBike;
         this.totalPrice = totalPrice;
+        this.previousHash = previousHash;
         this.hash = calculateHash();
     }
 
 
 
 
-    public String calculateHash() {
-        String customerString = (customer == null) ? "" : customer.toString();
-        String bikeString = (bike == null) ? "" : bike.toString();
-        return String.valueOf((customerString + bikeString + totalPrice + previousHash).hashCode());
+    public String calculateHash(){
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            int nonce = 0;
+            String input;
+
+            while (true) {
+                String customerName = (customer != null) ? customer.getName() : "";
+                String bikeName = (bike != null) ? bike.getName() : "";
+                double bikePrice = (bike != null) ? bike.getPrice() : 0.0;
+                input = index + timestamp + previousHash + customerName + bikeName + bikePrice + totalPrice + nonce;
+                byte[] hashBytes = digest.digest(input.getBytes("UTF-8"));
+                StringBuilder hexString = new StringBuilder();
+
+                for (byte b : hashBytes) {
+                    String hex = Integer.toHexString(0xff & b);
+                    if (hex.length() == 1) hexString.append('0');
+                    hexString.append(hex);
+                }
+
+                String hash = hexString.toString();
+
+                // Check if the hash starts with "00"
+                if (hash.startsWith("400")) {
+                    return hash;
+                }
+
+                // If not, increment the nonce and try again
+                nonce++;
+            }
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
