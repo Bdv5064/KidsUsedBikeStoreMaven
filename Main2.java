@@ -2,10 +2,8 @@ import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.Date;
-import java.util.List;
-import java.util.Scanner;
 
 // Define an abstract class for the base type of all products
 abstract class Product {
@@ -63,6 +61,7 @@ class Store implements DatabaseOperations {
     private double totalPrice = 0.00;
     private Customer currentCustomer;
     private final List<Customer> customers = new ArrayList<>();
+//    private final Map<Product, Integer> selectedItems = new HashMap<>();
     private final Blockchain blockchain = new Blockchain();
     private final Connection conn;
 
@@ -155,10 +154,15 @@ class Store implements DatabaseOperations {
             int choice = scanner.nextInt();
             if (choice >= 1 && choice <= inventory.size()) {
                 selectedProduct = inventory.get(choice - 1);
-                totalPrice += selectedProduct.getPrice();
-                System.out.println("You've added " + selectedProduct.getName() + " to your cart.");
+
+                System.out.print("Enter the quantity: "); // The user is prompted to enter the quantity for each selected product
+                int quantity = scanner.nextInt();
+
+                totalPrice += selectedProduct.getPrice() * quantity; // The total price is calculated based on the product's price multiplied by the quantity.
+                System.out.println("You've added " + quantity + " " + selectedProduct.getName() + "(s) to your cart.");
                 // Remove the selected product from the inventory
                 inventory.remove(choice - 1);
+                //The loop continues until the user decides to quit (enters 0) or return (enters -1).
             } else if (choice == 0) {
                 continueShopping = false;
             } else if (choice == -1) {
@@ -208,6 +212,17 @@ class Store implements DatabaseOperations {
             System.out.println("Price: $" + selectedProduct.getPrice());
             System.out.println("Total Price: $" + totalPrice);
             System.out.println("Payment: $" + payment);
+
+
+//            Product product = null;
+//            for (Map.Entry<Product, Integer> entry : selectedItems.entrySet()) {
+//                product = entry.getKey();
+//                int quantity = entry.getValue();
+//                System.out.println("Product Purchased: " + product.getName() + " (Quantity: " + quantity + ")");
+//                System.out.println("Type: " + product.getType());
+//                System.out.println("Price: $" + product.getPrice() + " per item");
+//            }
+
             System.out.println("Change: $" + change);
             System.out.println("Transaction Hash: " + transaction.getHash());
         } else {
@@ -366,6 +381,16 @@ public class Main2 {
 
             // Create a statement
             Statement stmt = conn.createStatement();
+
+            // SQL statement for creating a new table (BikeInventory)
+            String createBikeInventoryTable = "CREATE TABLE IF NOT EXISTS BikeInventory (" +
+                    "BikeID INT PRIMARY KEY AUTO_INCREMENT, " +
+                    "BikeName VARCHAR(255), " +
+                    "BikeCategory VARCHAR(255), " +
+                    "Price DECIMAL (10, 2)" +
+                    ");";
+            stmt.execute(createBikeInventoryTable);
+
 
             // SQL statement for creating a new table (CustomerDetails)
             String createCustomerTable = "CREATE TABLE IF NOT EXISTS CustomerDetails (" +
