@@ -7,8 +7,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
-// import com.fasterxml.jackson.databind.ObjectMapper;
-
 // Define an abstract class for the base type of all products
 abstract class Product {
     private final String name;
@@ -78,7 +76,7 @@ class Store implements DatabaseOperations {
         // Add bikes to the database
         for (Product product : inventory) {
             try {
-                PreparedStatement stmt = conn.prepareStatement("INSERT INTO BikeInventory (BikeMake, BikeModel, Price) VALUES (?, ?, ?)");
+                PreparedStatement stmt = conn.prepareStatement("INSERT INTO BikeInventory (BikeName, BikeCategory, Price) VALUES (?, ?, ?)");
                 stmt.setString(1, product.getName());
                 if (product instanceof Bike) {
                     stmt.setString(2, ((Bike) product).getCategory().toString());
@@ -190,7 +188,7 @@ class Store implements DatabaseOperations {
             // Remove the purchased product from the database
             // (Note: Adjust the logic based on the actual structure of your database)
             try {
-                PreparedStatement stmt = conn.prepareStatement("DELETE FROM BikeInventory WHERE BikeMake = ? AND BikeModel = ? AND Price = ?");
+                PreparedStatement stmt = conn.prepareStatement("DELETE FROM BikeInventory WHERE BikeName = ? AND BikeCategory = ? AND Price = ?");
                 stmt.setString(1, selectedProduct.getName());
                 if (selectedProduct instanceof Bike) {
                     stmt.setString(2, ((Bike) selectedProduct).getCategory().toString());
