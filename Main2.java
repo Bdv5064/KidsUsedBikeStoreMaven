@@ -244,9 +244,9 @@ class Store implements DatabaseOperations {
 
     class Customer {
         public String name;
-        public String email;
         public String fName;
         public String lName;
+        public String email;
         public String phone;
         public String address;
 
@@ -360,7 +360,7 @@ public class Main2 {
     public static void main(String[] args) {
         try {
             // Establish a connection
-            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "SQLW@ta$h!#914");
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "SQL3f=uTj!S(.&_qPcwyn"); // Use your own MySQL login name and password
 
             System.out.println("Connected to the database");
 
@@ -380,12 +380,16 @@ public class Main2 {
 
             // SQL statement for creating another table (OrderDetails) with foreign key referencing Customer(CustID)
             String createOrdersTable = "CREATE TABLE IF NOT EXISTS OrderDetails (" +
-                    "OrderID INT PRIMARY KEY AUTO_INCREMENT, " +
-                    "ProductID INT, " +
+                    "OrderID INT PRIMARY KEY, " +
                     "CustID INT, " +
+                    "FName VARCHAR(255), " +
+                    "LName VARCHAR(255), " +
                     "DateOfPurchase DATE, " +
+                    "BikeMake VARCHAR(255), " +
+                    "BikeModel VARCHAR(255), " +
+                    "Price DECIMAL(10, 2), " +
                     "TotalPrice DECIMAL(10, 2), " +
-                    "FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)" +
+                    "FOREIGN KEY (CustID) REFERENCES Customer(CustID)" +
                     ");";
             stmt.execute(createOrdersTable);
 
