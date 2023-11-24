@@ -1,4 +1,4 @@
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
@@ -7,54 +7,61 @@ import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
-public class Main2 {
+// import com.fasterxml.jackson.databind.ObjectMapper;
 
-    public static void main(String[] args) {
+// Define an abstract class for the base type of all products
+abstract class Product {
+    private final String name;
+    private final double price;
 
-        try {
-            // Establish a connection
-            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "SQLW@ta$h!#914");
+    public Product(String name, double price) {
+        this.name = name;
+        this.price = price;
+    }
 
-            // Create a statement
-            Statement stmt = conn.createStatement();
+    public abstract String getType();
 
-            // SQL statement for creating a new table (CustomerDetails)
-            String createCustomerTable = "CREATE TABLE IF NOT EXISTS CustomerDetails (" +
-                    "CustID INT PRIMARY KEY AUTO_INCREMENT, " +
-                    "FName VARCHAR(255), " +
-                    "LName VARCHAR(255), " +
-                    "EMail VARCHAR(255), " +
-                    "Phone VARCHAR(255), " +
-                    "Address VARCHAR(255)" +
-                    ");";
-            stmt.execute(createCustomerTable);
+    public String getName() {
+        return name;
+    }
 
-            // SQL statement for creating another table (OrderDetails) with foreign key referencing Customer(CustID)
-            String createOrdersTable = "CREATE TABLE IF NOT EXISTS OrderDetails (" +
-                    "OrderID INT PRIMARY KEY AUTO_INCREMENT, " +
-                    "BikeID INT, " +
-                    "CustID INT, " +
-                    "DateOfPurchase DATE, " +
-                    "TotalPrice DECIMAL(10, 2), " +
-                    "FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)" +
-                    ");";
-            stmt.execute(createOrdersTable);
-
-            System.out.println("Tables created successfully");
-
-            Store store = new Store(conn);
-            store.welcome();
-            store.signUp();
-            store.shop();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public double getPrice() {
+        return price;
     }
 }
 
-class Store {
-    private final List<Bike> inventory = new ArrayList<>();
+// Extend the Bike class from the Product class
+class Bike extends Product {
+    private final BikeCategory category;
+
+    public Bike(String name, BikeCategory category, double price) {
+        super(name, price);
+        this.category = category;
+    }
+
+    public BikeCategory getCategory() {
+        return category;
+    }
+
+    @Override
+    public String getType() {
+        return "Bike";
+    }
+
+    // Add a static method to the Bike class
+    public static void printBikeDetails(Bike bike) {
+        System.out.println("Bike Details: " + bike.getName() + ", Category: " + bike.getCategory() + ", Price: $" + bike.getPrice());
+    }
+}
+
+// Define an interface for database operations
+interface DatabaseOperations {
+    void saveToDatabase();
+    void retrieveFromDatabase();
+}
+
+class Store implements DatabaseOperations {
+    private final List<Product> inventory = new ArrayList<>();
     private double totalPrice = 0.00;
     private Customer currentCustomer;
     private final List<Customer> customers = new ArrayList<>();
@@ -64,17 +71,19 @@ class Store {
     public Store(Connection conn) {
         this.conn = conn;
         // Hardcode products into the inventory
-        inventory.add(new Bike("Kid's Bike: Mountain Bike", BikeCategory.MOUNTAIN_BIKE, 149.99));
-        inventory.add(new Bike("Kid's Bike: Road Bike", BikeCategory.ROAD_BIKE, 129.99));
-        inventory.add(new Bike("Kid's Bike: BMX Bike", BikeCategory.BMX_BIKE, 89.99));
-        inventory.add(new Bike("Kid's Bike: Cruiser Bike", BikeCategory.CRUISER_BIKE, 109.99));
+        inventory.add(new Bike("(Trailcraft) Mountain Bike", BikeCategory.MOUNTAIN_BIKE, 149.99));
+        inventory.add(new Bike("(Marin) Road Bike", BikeCategory.ROAD_BIKE, 129.99));
+        inventory.add(new Bike("(AVASTA) BMX Bike", BikeCategory.BMX_BIKE, 89.99));
+        inventory.add(new Bike("(Firmstrong) Cruiser Bike", BikeCategory.CRUISER_BIKE, 109.99));
         // Add bikes to the database
-        for (Bike bike : inventory) {
+        for (Product product : inventory) {
             try {
                 PreparedStatement stmt = conn.prepareStatement("INSERT INTO BikeInventory (BikeMake, BikeModel, Price) VALUES (?, ?, ?)");
-                stmt.setString(1, bike.getName());
-                stmt.setString(2, bike.getCategory().toString());
-                stmt.setDouble(3, bike.getPrice());
+                stmt.setString(1, product.getName());
+                if (product instanceof Bike) {
+                    stmt.setString(2, ((Bike) product).getCategory().toString());
+                }
+                stmt.setDouble(3, product.getPrice());
                 stmt.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -102,7 +111,7 @@ class Store {
 
         // Insert customer information into the Customer Details table
         try {
-            String insertCustomerQuery = "INSERT INTO Customer Details (FName, LName, EMail, Phone, Address) VALUES (?, ?, ?, ?, ?)";
+            String insertCustomerQuery = "INSERT INTO CustomerDetails (FName, LName, EMail, Phone, Address) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement stmt = conn.prepareStatement(insertCustomerQuery, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, fName);
                 stmt.setString(2, lName);
@@ -132,32 +141,32 @@ class Store {
     }
 
     public void displayInventory() {
-        System.out.println("Available Bikes:");
+        System.out.println("Available Products:");
         for (int i = 0; i < inventory.size(); i++) {
-            System.out.println((i + 1) + ". " + inventory.get(i));
+            System.out.println((i + 1) + ". " + inventory.get(i).getName());
         }
     }
 
     public void shop() {
         Scanner scanner = new Scanner(System.in);
         boolean continueShopping = true;
-        Bike selectedBike = null;
+        Product selectedProduct = null;
         while (continueShopping) {
             displayInventory();
             System.out.print("Enter a selection to purchase (0 to quit, -1 to return): ");
             int choice = scanner.nextInt();
             if (choice >= 1 && choice <= inventory.size()) {
-                selectedBike = inventory.get(choice - 1);
-                totalPrice += selectedBike.getPrice();
-                System.out.println("You've added " + selectedBike.getName() + " to your cart.");
-                // Remove the selected bike from the inventory
+                selectedProduct = inventory.get(choice - 1);
+                totalPrice += selectedProduct.getPrice();
+                System.out.println("You've added " + selectedProduct.getName() + " to your cart.");
+                // Remove the selected product from the inventory
                 inventory.remove(choice - 1);
             } else if (choice == 0) {
                 continueShopping = false;
             } else if (choice == -1) {
                 returnPurchase();
             } else {
-                System.out.println("Invalid input. Please select a valid bike number.");
+                System.out.println("Invalid input. Please select a valid product number.");
             }
         }
         System.out.println("Thank you for shopping with us!");
@@ -172,30 +181,33 @@ class Store {
             System.out.println("Please sign up before making a purchase.");
             signUp();
         }
-        if (change >= 0) {            System.out.println("Change: $" + change);
+        if (change >= 0) {
+            System.out.println("Change: $" + change);
             // Create a new block for the transaction
             transaction = new Block(0, null, null, null, 0.00);
             blockchain.addBlock(transaction);
 
-            // Remove the purchased bike from the database
-            // try {
-            //     PreparedStatement stmt = conn.prepareStatement("DELETE FROM BikeInventory WHERE BikeMake = ? AND BikeModel = ? AND Price = ?");
-            //     stmt.setString(1, selectedBike.getName());
-            //     stmt.setString(2, selectedBike.getCategory().toString());
-            //     stmt.setDouble(3, selectedBike.getPrice());
+            // Remove the purchased product from the database
+            // (Note: Adjust the logic based on the actual structure of your database)
+            try {
+                PreparedStatement stmt = conn.prepareStatement("DELETE FROM BikeInventory WHERE BikeMake = ? AND BikeModel = ? AND Price = ?");
+                stmt.setString(1, selectedProduct.getName());
+                if (selectedProduct instanceof Bike) {
+                    stmt.setString(2, ((Bike) selectedProduct).getCategory().toString());
+                }
+                stmt.setDouble(3, selectedProduct.getPrice());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
 
-
-            //     stmt.executeUpdate();
-            // } catch (SQLException e) {
-            //     e.printStackTrace();
-            // }
             // Print receipt
             System.out.println("Receipt:");
             System.out.println("Customer: " + currentCustomer.getName());
             System.out.println("Email: " + currentCustomer.getEmail());
-            System.out.println("Bike Purchased: " + selectedBike.getName());
-            System.out.println("Category: " + selectedBike.getCategory());
-            System.out.println("Price: $" + selectedBike.getPrice());
+            System.out.println("Product Purchased: " + selectedProduct.getName());
+            System.out.println("Type: " + selectedProduct.getType());
+            System.out.println("Price: $" + selectedProduct.getPrice());
             System.out.println("Total Price: $" + totalPrice);
             System.out.println("Payment: $" + payment);
             System.out.println("Change: $" + change);
@@ -207,44 +219,53 @@ class Store {
 
     public void returnPurchase() {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Select the bike you would like to return:");
+        System.out.println("Select the product you would like to return:");
         int returnChoice = scanner.nextInt();
-        Bike returnedBike = null;
+        Product returnedProduct = null;
 
         if (returnChoice >= 1 && returnChoice <= inventory.size()) {
-            returnedBike = inventory.get(returnChoice - 1);
-            totalPrice -= returnedBike.getPrice();
-            System.out.println("You've returned " + returnedBike.getName() + ". Refund amount: $" + returnedBike.getPrice());
-
+            returnedProduct = inventory.get(returnChoice - 1);
+            totalPrice -= returnedProduct.getPrice();
+            System.out.println("You've returned " + returnedProduct.getName() + ". Refund amount: $" + returnedProduct.getPrice());
         } else {
             System.out.println("Invalid. Please select a valid number.");
         }
     }
 
+    @Override
+    public void saveToDatabase() {
+        // Implement save logic
+        // (e.g., save the state of the store, inventory, customers, etc., to the database)
+    }
+
+    @Override
+    public void retrieveFromDatabase() {
+        // Implement retrieval logic
+        // (e.g., load the state of the store, inventory, customers, etc., from the database)
+    }
+
     class Customer {
         public String name;
         public String email;
-        public String getName() {
-            return name;
-        }
+        public String fName;
+        public String lName;
+        public String phone;
+        public String address;
 
-        public void setName(String name) {
-            this.name = name;
+        public String getName() {
+            return fName + " " + lName;
         }
 
         public String getEmail() {
             return email;
         }
 
-        public void setEmail(String email) {
+        public Customer(String fName, String lName, String email, String phone, String address) {
+            this.fName = fName;
+            this.lName = lName;
             this.email = email;
-        }
-
-        public Customer(String fName, String lName, String s, String name, String email) {
-            this.name = name;
-            this.email = email;
-
-
+            this.phone = phone;
+            this.address = address;
         }
     }
 }
@@ -274,25 +295,22 @@ class Block {
     private final Store.Customer customer;
     private int index;
     private long timestamp;
-    private final Bike bike;
+    private final Product product;
     private final double totalPrice;
     private String previousHash;
     private String hash;
 
-    public Block(int index, String previousHash, Store.Customer currentCustomer, Bike selectedBike, double totalPrice) {
+    public Block(int index, String previousHash, Store.Customer currentCustomer, Product selectedProduct, double totalPrice) {
         this.index = index;
         this.timestamp = new Date().getTime();
         this.customer = currentCustomer;
-        this.bike = selectedBike;
+        this.product = selectedProduct;
         this.totalPrice = totalPrice;
         this.previousHash = previousHash;
         this.hash = calculateHash();
     }
 
-
-
-
-    public String calculateHash(){
+    public String calculateHash() {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             int nonce = 0;
@@ -300,9 +318,9 @@ class Block {
 
             while (true) {
                 String customerName = (customer != null) ? customer.getName() : "";
-                String bikeName = (bike != null) ? bike.getName() : "";
-                double bikePrice = (bike != null) ? bike.getPrice() : 0.0;
-                input = index + timestamp + previousHash + customerName + bikeName + bikePrice + totalPrice + nonce;
+                String productName = (product != null) ? product.getName() : "";
+                double productPrice = (product != null) ? product.getPrice() : 0.0;
+                input = index + timestamp + previousHash + customerName + productName + productPrice + totalPrice + nonce;
                 byte[] hashBytes = digest.digest(input.getBytes("UTF-8"));
                 StringBuilder hexString = new StringBuilder();
 
@@ -327,7 +345,6 @@ class Block {
         }
     }
 
-
     public void setPreviousHash(String previousHash) {
         this.previousHash = previousHash;
     }
@@ -339,42 +356,52 @@ class Block {
     public void setHash(String hash) {
         this.hash = hash;
     }
-
-    private class Customer {
-    }
 }
 
-class Bike {
-    private final String name;
-    private final BikeCategory category;
-    private final double price;
+public class Main2 {
+    public static void main(String[] args) {
+        try {
+            // Establish a connection
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "SQLW@ta$h!#914");
 
-    public Bike(String name, BikeCategory category, double price) {
-        this.name = name;
-        this.category = category;
-        this.price = price;
-    }
+            System.out.println("Connected to the database");
 
+            // Create a statement
+            Statement stmt = conn.createStatement();
 
+            // SQL statement for creating a new table (CustomerDetails)
+            String createCustomerTable = "CREATE TABLE IF NOT EXISTS CustomerDetails (" +
+                    "CustID INT PRIMARY KEY AUTO_INCREMENT, " +
+                    "FName VARCHAR(255), " +
+                    "LName VARCHAR(255), " +
+                    "EMail VARCHAR(255), " +
+                    "Phone VARCHAR(255), " +
+                    "Address VARCHAR(255)" +
+                    ");";
+            stmt.execute(createCustomerTable);
 
-    public String getName() {
-        return name;
-    }
+            // SQL statement for creating another table (OrderDetails) with foreign key referencing Customer(CustID)
+            String createOrdersTable = "CREATE TABLE IF NOT EXISTS OrderDetails (" +
+                    "OrderID INT PRIMARY KEY AUTO_INCREMENT, " +
+                    "ProductID INT, " +
+                    "CustID INT, " +
+                    "DateOfPurchase DATE, " +
+                    "TotalPrice DECIMAL(10, 2), " +
+                    "FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)" +
+                    ");";
+            stmt.execute(createOrdersTable);
 
-    public BikeCategory getCategory() {
-        return category;
-    }
+            System.out.println("Tables created successfully");
 
-    public double getPrice() {
-        return price;
-    }
+            Store store = new Store(conn);
+            store.welcome();
+            store.signUp();
+            store.shop();
 
-    @Override
-    public String toString() {
-        return "Bike: " +
-                "name= '" + name + '\'' +
-                ", type= " + category +
-                ", price= " + price +
-                '}';
+            // Close the connection
+            conn.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

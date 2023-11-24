@@ -1,32 +1,42 @@
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 
-public class Main2Test {
-    private Connection testConnection;
+public class StoreTest {
+
+    private ByteArrayOutputStream mockOutput;
+    private PrintStream originalSystemOut;
+    private InputStream originalSystemIn;
 
     @BeforeEach
     public void setUp() {
-        // Set up a test database connection
-        try {
-            testConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/TestDatabase", "testUser", "testPassword");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        // Save the original System.out and System.in
+        originalSystemOut = System.out;
+        originalSystemIn = System.in;
+
+        // Set up a stream to capture System.out
+        mockOutput = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(mockOutput));
     }
 
     @Test
     public void testSignUp() {
         // Create a test store with the test connection
-        Store store = new Store(testConnection);
+        Store store = new Store();
 
         // Mock user input for testing
         String mockInput = "John\nDoe\njohn.doe@example.com\n123456789\nTest Address";
-        System.setIn(new java.io.ByteArrayInputStream(mockInput.getBytes()));
+        System.setIn(new ByteArrayInputStream(mockInput.getBytes()));
 
         // Execute the signUp method
         store.signUp();
@@ -43,11 +53,11 @@ public class Main2Test {
     @Test
     public void testShop() {
         // Create a test store with the test connection
-        Store store = new Store(testConnection);
+        Store store = new Store();
 
         // Mock user input for testing
         String mockInput = "1\n0\n";
-        System.setIn(new java.io.ByteArrayInputStream(mockInput.getBytes()));
+        System.setIn(new ByteArrayInputStream(mockInput.getBytes()));
 
         // Execute the shop method
         store.shop();
@@ -57,17 +67,80 @@ public class Main2Test {
 
         // Validate the total price
         assertEquals(149.99, totalPrice);
+        assertEquals(129.99, totalPrice);
+        assertEquals(89.99, totalPrice);
+        assertEquals(109.99, totalPrice);
     }
 
-    // Add more test methods for other functionalities...
+    @ParameterizedTest
+    @ValueSource(strings = {"1\n0\n", "2\n0\n", "3\n0\n"})
+    public void testShoppingWithDifferentInputs(String userInput) {
+        Store store = new Store();
+        store.welcome();
+        store.signUp();
 
-    // After all tests, close the test connection
-    // @AfterAll
-    // public void tearDown() {
-    //     try {
-    //         testConnection.close();
-    //     } catch (SQLException e) {
-    //         e.printStackTrace();
-    //     }
-    // }
+        // Mock user input for testing
+        ByteArrayInputStream mockInput = new ByteArrayInputStream(userInput.getBytes());
+        System.setIn(mockInput);
+
+        // Redirect output to capture it for assertions
+        System.setOut(new PrintStream(mockOutput));
+
+        store.shop();
+
+        // Assert your expectations based on the provided input
+    }
+
+    @Test
+    public void testReturnPurchase() {
+        Store store = new Store();
+        store.welcome();
+        store.signUp();
+
+        // Mock user input for testing
+        ByteArrayInputStream mockInput = new ByteArrayInputStream("-1\n".getBytes());
+        System.setIn(mockInput);
+
+        // Redirect output to capture it for assertions
+        System.setOut(new PrintStream(mockOutput));
+
+        store.returnPurchase();
+
+        // Validate the output contains expected messages
+        assertTrue(mockOutput.toString().contains("Select the bike you would like to return:"));
+        assertTrue(mockOutput.toString().contains("Invalid. Please select a valid number."));
+    }
+
+    @Test
+    public void testShopping() {
+        Store store = new Store();
+        store.welcome();
+        store.signUp();
+
+        // Mock user input for testing (you can use a testing library for more advanced input mocking)
+        ByteArrayInputStream mockInput = new ByteArrayInputStream("1\n0\n".getBytes());
+        System.setIn(mockInput);
+
+        // Redirect output to capture it for assertions
+        System.setOut(new PrintStream(mockOutput));
+
+        store.shop();
+
+        // Validate the output contains expected messages
+        assertTrue(mockOutput.toString().contains("Thank you for shopping with us!"));
+        assertTrue(mockOutput.toString().contains("Total Price: $"));
+    }
+
+    @AfterEach
+    public void tearDown() {
+        // Restore the original System.out and System.in
+        System.setOut(originalSystemOut);
+        System.setIn(originalSystemIn);
+
+        // Close the ByteArrayOutputStream
+        try {
+            mockOutput.close();
+        } catch (Exception ignored) {
+        }
+    }
 }
