@@ -406,13 +406,14 @@ public class Main2 {
             // SQL statement for creating another table (OrderDetails) with foreign key referencing Customer(CustID)
             String createOrdersTable = "CREATE TABLE IF NOT EXISTS OrderDetails (" +
                     "OrderID INT PRIMARY KEY, " +
+                    "ProductID, " +
                     "CustID INT, " +
-                    "FName VARCHAR(255), " +
-                    "LName VARCHAR(255), " +
+//                    "FName VARCHAR(255), " +
+//                    "LName VARCHAR(255), " +
                     "DateOfPurchase DATE, " +
-                    "BikeMake VARCHAR(255), " +
-                    "BikeModel VARCHAR(255), " +
-                    "Price DECIMAL(10, 2), " +
+//                    "BikeName VARCHAR(255), " +
+//                    "BikeCategory VARCHAR(255), " +
+//                    "Price DECIMAL(10, 2), " +
                     "TotalPrice DECIMAL(10, 2), " +
                     "FOREIGN KEY (CustID) REFERENCES Customer(CustID)" +
                     ");";
