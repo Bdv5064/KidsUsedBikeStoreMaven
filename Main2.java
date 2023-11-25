@@ -433,3 +433,66 @@ public class Main2 {
         }
     }
 }
+
+
+
+//    USE KidsUsedBikeStore;
+//
+//-- Insert sample data into BikeInventory
+//        INSERT INTO BikeInventory (BikeName, BikeCategory, Price) VALUES
+//        ('(Trailcraft) Mountain Bike', 'MOUNTAIN_BIKE', 149.99),
+//        ('(Marin) Road Bike', 'ROAD_BIKE', 129.99),
+//        ('(AVASTA) BMX Bike', 'BMX_BIKE', 89.99),
+//        ('(Firmstrong) Cruiser Bike', 'CRUISER_BIKE', 109.99);
+//
+//
+//        -- Insert sample data into CustomerDetails
+//        INSERT INTO CustomerDetails (FName, LName, EMail, Phone, Address) VALUES
+//        ('John', 'Doe', 'john.doe01@example.com', '1234567890', '123 Main St'),
+//        ('Jane', 'Doe', 'jane.doe02@example.com', '9876543210', '456 Oak St');
+//
+//
+//        -- Insert sample data into OrderDetails
+//        INSERT INTO OrderDetails (ProductID, CustID, DateOfPurchase, TotalPrice) VALUES
+//        (1, 1, '2023-11-22', 149.99),
+//        (2, 2, '2023-11-22', 129.99);
+//
+//
+//        -- Check data in BikeInventory
+//        SELECT * FROM BikeInventory;
+//
+//        -- Check data in CustomerDetails
+//        SELECT * FROM CustomerDetails;
+//
+//        -- Check data in OrderDetails
+//        SELECT * FROM OrderDetails;
+//
+//
+//        -- For BikeInventory Table
+//        -- Create a new table with unique rows and selected columns
+//        CREATE TABLE UniqueReducedBikeInventory AS
+//        SELECT DISTINCT BikeID, BikeName, BikeCategory, Price
+//        FROM BikeInventory;
+//
+//        -- Replace the existing table with the new one
+//        RENAME TABLE UniqueReducedBikeInventory TO BikeInventory;
+//
+//
+//        -- For CustomerDetails Table
+//        -- Create a new table with unique rows and selected columns
+//        CREATE TABLE UniqueReducedCustomerDetails AS
+//        SELECT DISTINCT CustID, FName, LName, EMail, Phone, Address
+//        FROM CustomerDetails;
+//
+//        -- Replace the existing table with the new one
+//        RENAME TABLE UniqueReducedCustomerDetails TO CustomerDetails;
+//
+//
+//        -- For OrderDetails Table
+//        -- Create a new table with unique rows and selected columns
+//        CREATE TABLE UniqueReducedOrderDetails AS
+//        SELECT DISTINCT OrderID, CustID, DateOfPurchase, BikeName, BikeCategory, Price, TotalPrice
+//        FROM OrderDetails;
+//
+//        -- Replace the existing table with the new one
+//        RENAME TABLE UniqueReducedOrderDetails TO OrderDetails;
