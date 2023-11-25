@@ -5,7 +5,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.Date;
 
-// Define an abstract class for the base type of all products
+// Abstraction: define abstract class for the base type of all products
 abstract class Product {
     private final String name;
     private final double price;
@@ -26,7 +26,7 @@ abstract class Product {
     }
 }
 
-// Extend the Bike class from the Product class
+// Inheritance: extend the Bike class from the Product class
 class Bike extends Product {
     private final BikeCategory category;
 
@@ -39,24 +39,27 @@ class Bike extends Product {
         return category;
     }
 
+    // Overriding
     @Override
     public String getType() {
         return "Bike";
     }
 
-    // Add a static method to the Bike class
+    // Static Methods: add a static method to the Bike class
     public static void printBikeDetails(Bike bike) {
         System.out.println("Bike Details: " + bike.getName() + ", Category: " + bike.getCategory() + ", Price: $" + bike.getPrice());
     }
 }
 
-// Define an interface for database operations
+// Interfaces: define an interface for database operations
 interface DatabaseOperations {
     void saveToDatabase();
     void retrieveFromDatabase();
 }
 
 class Store implements DatabaseOperations {
+
+    // Array Lists: modify the Store class to use ArrayList instead of a simple list
     private final List<Product> inventory = new ArrayList<>();
     private double totalPrice = 0.00;
     private Customer currentCustomer;
@@ -261,6 +264,7 @@ class Store implements DatabaseOperations {
             return email;
         }
 
+        // Overloading: overloaded constructor in the Customer class
         public Customer(String fName, String lName, String email, String phone, String address) {
             this.fName = fName;
             this.lName = lName;
