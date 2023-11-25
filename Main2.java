@@ -61,7 +61,6 @@ class Store implements DatabaseOperations {
     private double totalPrice = 0.00;
     private Customer currentCustomer;
     private final List<Customer> customers = new ArrayList<>();
-//    private final Map<Product, Integer> selectedItems = new HashMap<>();
     private final Blockchain blockchain = new Blockchain();
     private final Connection conn;
 
@@ -212,17 +211,6 @@ class Store implements DatabaseOperations {
             System.out.println("Price: $" + selectedProduct.getPrice());
             System.out.println("Total Price: $" + totalPrice);
             System.out.println("Payment: $" + payment);
-
-
-//            Product product = null;
-//            for (Map.Entry<Product, Integer> entry : selectedItems.entrySet()) {
-//                product = entry.getKey();
-//                int quantity = entry.getValue();
-//                System.out.println("Product Purchased: " + product.getName() + " (Quantity: " + quantity + ")");
-//                System.out.println("Type: " + product.getType());
-//                System.out.println("Price: $" + product.getPrice() + " per item");
-//            }
-
             System.out.println("Change: $" + change);
             System.out.println("Transaction Hash: " + transaction.getHash());
         } else {
