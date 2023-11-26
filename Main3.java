@@ -248,6 +248,10 @@ class Store implements DatabaseOperations {
         // (e.g., load the state of the store, inventory, customers, etc., from the database)
     }
 
+    public Object getCurrentCustomer() {
+        return customers;
+    }
+
     class Customer {
         public String name;
         public String fName;
@@ -363,11 +367,11 @@ class Block {
     }
 }
 
-public class Main2 {
+public class Main3 {
     public static void main(String[] args) {
         try {
             // Establish a connection
-            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "SQL3f=uTj!S(.&_qPcwyn"); // Use your own MySQL login name and password
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "Mydatabase2023"); // Use your own MySQL login name and password
 
             System.out.println("Connected to the database");
 
