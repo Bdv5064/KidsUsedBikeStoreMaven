@@ -150,6 +150,8 @@ class Store implements DatabaseOperations {
         Scanner scanner = new Scanner(System.in);
         boolean continueShopping = true;
         Product selectedProduct = null;
+        List<Product> selectedProducts = new ArrayList<>();
+
         while (continueShopping) {
             displayInventory();
             System.out.print("Enter a selection to purchase (0 to quit, -1 to return): ");
@@ -161,6 +163,12 @@ class Store implements DatabaseOperations {
                 int quantity = scanner.nextInt();
 
                 totalPrice += selectedProduct.getPrice() * quantity; // The total price is calculated based on the product's price multiplied by the quantity.
+
+                // Add the selected product to the list with the specified quantity
+                for(int i = 0; i <quantity; i++){
+                    selectedProducts.add(selectedProduct);
+
+                }
                 System.out.println("You've added " + quantity + " " + selectedProduct.getName() + "(s) to your cart.");
                 // Remove the selected product from the inventory
                 inventory.remove(choice - 1);
@@ -173,7 +181,12 @@ class Store implements DatabaseOperations {
                 System.out.println("Invalid input. Please select a valid product number.");
             }
         }
-        System.out.println("Thank you for shopping with us!");
+
+
+
+        for (Product product : selectedProducts) {
+            System.out.println("Category: " + ((Bike) product).getCategory() + ", Price: $" + product.getPrice());
+        }
         System.out.println("Total Price: $" + totalPrice);
         System.out.print("Enter the amount of cash you're paying with: $");
         double payment = scanner.nextDouble();
@@ -204,14 +217,15 @@ class Store implements DatabaseOperations {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-
+            System.out.println("Thank you for shopping with us!");
             // Print receipt
             System.out.println("Receipt:");
             System.out.println("Customer: " + currentCustomer.getName());
             System.out.println("Email: " + currentCustomer.getEmail());
-            System.out.println("Product Purchased: " + selectedProduct.getName());
-            System.out.println("Type: " + selectedProduct.getType());
-            System.out.println("Price: $" + selectedProduct.getPrice());
+            for (Product product : selectedProducts) {
+                System.out.println("Product Purchased: " + product.getName());
+                System.out.println("Price: $" + product.getPrice());
+            }
             System.out.println("Total Price: $" + totalPrice);
             System.out.println("Payment: $" + payment);
             System.out.println("Change: $" + change);
@@ -371,7 +385,7 @@ public class Main3 {
     public static void main(String[] args) {
         try {
             // Establish a connection
-            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "Mydatabase2023"); // Use your own MySQL login name and password
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "123qwe"); // Use your own MySQL login name and password
 
             System.out.println("Connected to the database");
 
