@@ -5,6 +5,5 @@ enum BikeCategory {
     ROAD_BIKE,
     BMX_BIKE,
     CRUISER_BIKE,
-    DEFAULT
 }
 

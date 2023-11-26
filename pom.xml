@@ -36,8 +36,13 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>RELEASE</version>
-            <scope>compile</scope>
+            <version>5.9.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.9.2</version>
         </dependency>
     </dependencies>
 
@@ -56,3 +61,6 @@
         </plugins>
     </build>
 </project>
+
+<!-- Others may use the RELEASE version w/ compile scope -->
+<!-- W/ Maven 17, I use version 5.9.2 w/ test scope -->

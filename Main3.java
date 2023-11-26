@@ -39,7 +39,7 @@ class Bike extends Product {
         return category;
     }
 
-    // Overriding
+    // Overriding: The getType() method is declared in the abstract class Product and overridden in the Bike class
     @Override
     public String getType() {
         return "Bike";
@@ -323,6 +323,7 @@ class Block {
     private String previousHash;
     private String hash;
 
+    // Hashing & Security: The Block class calculates a SHA-256 hash based on various data, demonstrating a basic form of hashing for security
     public Block(int index, String previousHash, Store.Customer currentCustomer, Product selectedProduct, double totalPrice) {
         this.index = index;
         this.timestamp = new Date().getTime();
@@ -385,7 +386,7 @@ public class Main3 {
     public static void main(String[] args) {
         try {
             // Establish a connection
-            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "123qwe"); // Use your own MySQL login name and password
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root","SQL3f=uTj!S(.&_qPcwyn"); // Use your own MySQL login name and password
 
             System.out.println("Connected to the database");
 
@@ -431,7 +432,7 @@ public class Main3 {
             store.signUp();
             store.shop();
 
-            // Close the connection
+            // Closing Database Connection: The MySQL database connection is properly closed in the main method using conn.close()
             conn.close();
         } catch (Exception e) {
             e.printStackTrace();
