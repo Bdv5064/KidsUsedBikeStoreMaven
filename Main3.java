@@ -152,6 +152,7 @@ class Store implements DatabaseOperations {
         Product selectedProduct = null;
         List<Product> selectedProducts = new ArrayList<>();
 
+
         while (continueShopping) {
             displayInventory();
             System.out.print("Enter a selection to purchase (0 to quit, -1 to return): ");
@@ -212,7 +213,7 @@ class Store implements DatabaseOperations {
                 if (selectedProduct instanceof Bike) {
                     stmt.setString(2, ((Bike) selectedProduct).getCategory().toString());
                 }
-                stmt.setDouble(3, selectedProduct.getPrice());
+                stmt.setString(3, Double.toString(selectedProduct.getPrice())); // Convert price to string
                 stmt.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -314,6 +315,7 @@ class Blockchain {
     }
 }
 
+// Hashing & Security: The Block class calculates a SHA-256 hash based on various data, demonstrating a basic form of hashing for security
 class Block {
     private final Store.Customer customer;
     private int index;
@@ -323,7 +325,7 @@ class Block {
     private String previousHash;
     private String hash;
 
-    // Hashing & Security: The Block class calculates a SHA-256 hash based on various data, demonstrating a basic form of hashing for security
+
     public Block(int index, String previousHash, Store.Customer currentCustomer, Product selectedProduct, double totalPrice) {
         this.index = index;
         this.timestamp = new Date().getTime();
@@ -420,9 +422,10 @@ public class Main3 {
                     "ProductID INT, " +
                     "CustID INT, " +
                     "DateOfPurchase DATE, " +
-                    "TotalPrice DECIMAL(10, 2), " +
+                    "TotalPrice VARCHAR(255), " +
                     "FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)" +
                     ");";
+            // Changed TotalPrice DECIMAL(10, 2) to VARCHAR(255) so that totalPrice is converted to a String and is read that way in MySQL
             stmt.execute(createOrdersTable);
 
             System.out.println("Tables created successfully");

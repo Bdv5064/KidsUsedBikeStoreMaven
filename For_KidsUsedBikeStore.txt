@@ -1,6 +1,7 @@
 -- SQL Code for KidsUsedBikeStore Database
 
--- DELETE DATABASE KidsUsedBikeStore;
+-- Use the statement below to discard a database that was already created
+-- DROP DATABASE KidsUsedBikeStore;
 
 -- Un-comment the statement below to actually create the KidsUsedBikeStore database
 -- CREATE DATABASE KidsUsedBikeStore;
@@ -38,10 +39,10 @@ CREATE TABLE IF NOT EXISTS CustomerDetails (
 );
 
 
--- Insert sample data into CustomerDetails
-INSERT INTO CustomerDetails (FName, LName, EMail, Phone, Address) VALUES
-    ('John', 'Doe', 'john.doe01@example.com', '1234567890', '123 Main St'),
-    ('Jane', 'Doe', 'jane.doe02@example.com', '9876543210', '456 Oak St');
+-- Optional: Insert sample data into CustomerDetails
+-- INSERT INTO CustomerDetails (FName, LName, EMail, Phone, Address) VALUES
+    -- ('John', 'Doe', 'john.doe01@example.com', '1234567890', '123 Main St'),
+    -- ('Jane', 'Doe', 'jane.doe02@example.com', '9876543210', '456 Oak St');
 
 
 -- Create OrderDetails table
@@ -51,14 +52,15 @@ CREATE TABLE IF NOT EXISTS OrderDetails (
     CustID INT,
     DateOfPurchase DATE,
     TotalPrice DECIMAL(10, 2),
+    -- Changed TotalPrice DECIMAL(10, 2) to VARCHAR(255) so that totalPrice is converted to a String and is read that way in MySQL
     FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)
 );
 
 
--- Insert sample data into OrderDetails
-INSERT INTO OrderDetails (ProductID, CustID, DateOfPurchase, TotalPrice) VALUES
-    (1, 1, '2023-11-22', 149.99),
-    (2, 2, '2023-11-22', 129.99);
+-- Optional: Insert sample data into OrderDetails
+-- INSERT INTO OrderDetails (ProductID, CustID, DateOfPurchase, TotalPrice) VALUES
+    -- (1, 1, '2023-11-22', 149.99),
+    -- (2, 2, '2023-11-22', 129.99);
 
 
 -- Check data in BikeInventory
