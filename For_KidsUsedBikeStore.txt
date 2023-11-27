@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS OrderDetails (
     ProductID INT,
     CustID INT,
     DateOfPurchase DATE,
-    TotalPrice DECIMAL(10, 2),
+    TotalPrice VARCHAR(255),
     -- Changed TotalPrice DECIMAL(10, 2) to VARCHAR(255) so that totalPrice is converted to a String and is read that way in MySQL
     FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)
 );
