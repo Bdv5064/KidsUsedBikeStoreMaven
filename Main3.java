@@ -213,7 +213,7 @@ class Store implements DatabaseOperations {
                 if (selectedProduct instanceof Bike) {
                     stmt.setString(2, ((Bike) selectedProduct).getCategory().toString());
                 }
-                stmt.setString(3, Double.toString(selectedProduct.getPrice())); // Convert price to string
+                stmt.setDouble(3, selectedProduct.getPrice()); // Convert price to string:  I did Double.toString(selectedProduct.getPrice()
                 stmt.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -426,6 +426,7 @@ public class Main3 {
                     "FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)" +
                     ");";
             // Changed TotalPrice DECIMAL(10, 2) to VARCHAR(255) so that totalPrice is converted to a String and is read that way in MySQL
+            //Did not quite work
             stmt.execute(createOrdersTable);
 
             System.out.println("Tables created successfully");
