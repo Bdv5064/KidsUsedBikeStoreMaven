@@ -234,6 +234,26 @@ class Store implements DatabaseOperations {
         } else {
             System.out.println("Insufficient payment. Please pay the full amount.");
         }
+        String sql = "INSERT INTO OrderDetails (OrderID, ProductID, CustID, DateOfPurchase, TotalPrice) VALUES (?, ?, ?, ?, ?)";
+
+        int orderId = 1;  // Your order ID
+        int productId = 1;  // Your product ID
+        int custId = 1;  // Your customer ID
+        Date dateOfPurchase = new Date();  // Your date of purchase
+        double totalPrice = this.totalPrice;  // Your total priceB
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, orderId);
+            stmt.setInt(2, productId);
+            stmt.setInt(3, custId);
+            stmt.setDate(4, new java.sql.Date(dateOfPurchase.getTime()));
+            stmt.setDouble(5, totalPrice);
+            stmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void returnPurchase() {
@@ -388,7 +408,7 @@ public class Main3 {
     public static void main(String[] args) {
         try {
             // Establish a connection
-            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root","SQL3f=uTj!S(.&_qPcwyn"); // Use your own MySQL login name and password
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root","SQLW@ta$h!#914"); // Use your own MySQL login name and password
 
             System.out.println("Connected to the database");
 
@@ -422,7 +442,7 @@ public class Main3 {
                     "ProductID INT, " +
                     "CustID INT, " +
                     "DateOfPurchase DATE, " +
-                    "TotalPrice VARCHAR(255), " +
+                    "TotalPrice DOUBLE, " +
                     "FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)" +
                     ");";
             // Changed TotalPrice DECIMAL(10, 2) to VARCHAR(255) so that totalPrice is converted to a String and is read that way in MySQL
@@ -441,6 +461,7 @@ public class Main3 {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 }
 
