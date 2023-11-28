@@ -26,7 +26,7 @@ public class StoreTest {
         }
     }
     @Test
-    public void testSignUp() {
+    public void testSignUp() throws SQLException {
         Store store = new Store(conn);
         // Simulate user input for sign-up
         ByteArrayInputStream inContent = new ByteArrayInputStream("Jon\nVar\njon@example.com\n1234567890\n123 Main St".getBytes());
@@ -39,7 +39,7 @@ public class StoreTest {
 
 
     @Test
-    public void testReturnProcess() {
+    public void testReturnProcess() throws SQLException {
         // ByteArrayInputStream simulates user input for returning a purchased bike
         String input = "1\n";
         InputStream in = new ByteArrayInputStream(input.getBytes());

@@ -67,7 +67,10 @@ class Store implements DatabaseOperations {
     private final Blockchain blockchain = new Blockchain();
     private final Connection conn;
 
-    public Store(Connection conn) {
+
+    public int generatedProductId = 1;
+
+    public Store(Connection conn) throws SQLException {
         this.conn = conn;
         // Hardcode products into the inventory
         inventory.add(new Bike("(Trailcraft) Mountain Bike", BikeCategory.MOUNTAIN_BIKE, 149.99));
@@ -84,17 +87,34 @@ class Store implements DatabaseOperations {
                 }
                 stmt.setDouble(3, product.getPrice());
                 stmt.executeUpdate();
+
+
+                // Get the generated product ID
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int generatedProductId = generatedKeys.getInt(1);
+                        System.out.println("Product ID: " + generatedProductId);
+                    } else {
+                        throw new SQLException("Creating product failed, no ID obtained.");
+                    }
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+
             } catch (SQLException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
+
         }
     }
-
-    public void welcome() {
+            public void welcome() {
         System.out.println("Welcome to the Used Bikes for Kids Store!");
         System.out.println("Sign Up Below");
     }
-
+    public int generatedCustomerId = 1;
+    public int generatedOrderId = 1;
     public void signUp() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter first name: ");
@@ -120,10 +140,10 @@ class Store implements DatabaseOperations {
                 stmt.executeUpdate();
 
                 // Get the generated customer ID
-                int generatedCustomerId;
-                try (var rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        generatedCustomerId = rs.getInt(1);
+
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int generatedCustomerId = generatedKeys.getInt(1);
                         System.out.println("Customer ID: " + generatedCustomerId);
                     } else {
                         throw new SQLException("Creating customer failed, no ID obtained.");
@@ -146,7 +166,7 @@ class Store implements DatabaseOperations {
         }
     }
 
-    public void shop() {
+    public void shop() throws SQLException {
         Scanner scanner = new Scanner(System.in);
         boolean continueShopping = true;
         Product selectedProduct = null;
@@ -234,27 +254,37 @@ class Store implements DatabaseOperations {
         } else {
             System.out.println("Insufficient payment. Please pay the full amount.");
         }
-        String sql = "INSERT INTO OrderDetails (OrderID, ProductID, CustID, DateOfPurchase, TotalPrice) VALUES (?, ?, ?, ?, ?)";
 
-        int orderId = 1;  // Your order ID
-        int productId = 1;  // Your product ID
-        int custId = 1;  // Your customer ID
         Date dateOfPurchase = new Date();  // Your date of purchase
-        double totalPrice = this.totalPrice;  // Your total priceB
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        double totalPrice = this.totalPrice;  // Your total price
+        int orderId = generatedOrderId;
+        int custId = generatedCustomerId;
+        int productId = generatedProductId;
+        String sql = "INSERT INTO OrderDetails (OrderID, ProductID, CustID, DateOfPurchase, TotalPrice) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, orderId);
             stmt.setInt(2, productId);
             stmt.setInt(3, custId);
             stmt.setDate(4, new java.sql.Date(dateOfPurchase.getTime()));
             stmt.setDouble(5, totalPrice);
             stmt.executeUpdate();
+            // Get the generated order ID
 
-        } catch (Exception e) {
-            e.printStackTrace();
+            // Get the generated order ID
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int generatedOrderId = generatedKeys.getInt(1);
+                    System.out.println("Order ID: " + generatedOrderId);
+                } else {
+                    throw new SQLException("Creating order failed, no ID obtained.");
+                }
+            }
+        }
+     catch (SQLException e) {
+        e.printStackTrace();
         }
     }
+
 
     public void returnPurchase() {
         Scanner scanner = new Scanner(System.in);
@@ -438,7 +468,7 @@ public class Main3 {
 
             // SQL statement for creating another table (OrderDetails) with foreign key referencing Customer(CustID)
             String createOrdersTable = "CREATE TABLE IF NOT EXISTS OrderDetails (" +
-                    "OrderID INT PRIMARY KEY, " +
+                    "OrderID INT AUTO_INCREMENT PRIMARY KEY, " +
                     "ProductID INT, " +
                     "CustID INT, " +
                     "DateOfPurchase DATE, " +
