@@ -74,6 +74,7 @@ class Store implements DatabaseOperations {
         inventory.add(new Bike("(Marin) Road Bike", BikeCategory.ROAD_BIKE, 129.99));
         inventory.add(new Bike("(AVASTA) BMX Bike", BikeCategory.BMX_BIKE, 89.99));
         inventory.add(new Bike("(Firmstrong) Cruiser Bike", BikeCategory.CRUISER_BIKE, 109.99));
+
         // Add bikes to the database
         for (Product product : inventory) {
             try {
@@ -219,6 +220,11 @@ class Store implements DatabaseOperations {
                 e.printStackTrace();
             }
             System.out.println("Thank you for shopping with us!");
+
+            // Check if there is a refund
+            boolean hasRefund = selectedProducts.size() > 1;
+
+
             // Print receipt
             System.out.println("Receipt:");
             System.out.println("Customer: " + currentCustomer.getName());
@@ -229,10 +235,84 @@ class Store implements DatabaseOperations {
             }
             System.out.println("Total Price: $" + totalPrice);
             System.out.println("Payment: $" + payment);
+
+
+
+            // Print refund information
+            if (hasRefund) {
+                double refundAmount = totalPrice - selectedProduct.getPrice();
+                System.out.println("Refund: $" + refundAmount);
+            }
+
+
+
             System.out.println("Change: $" + change);
             System.out.println("Transaction Hash: " + transaction.getHash());
         } else {
             System.out.println("Insufficient payment. Please pay the full amount.");
+        }
+
+        // Insert order details into the Order table
+        String sql = "INSERT INTO Orders (ProductID, CustID, DateOfPurchase, CustomerFirstName, CustomerLastName) VALUES (?, ?, ?, ?, ?)";
+        int productId = 10000; /* your product ID */
+        int custId = 100; /* your customer ID */
+        Date dateOfPurchase = new Date(); /* your date of purchase */
+        String customerFirstName = currentCustomer.fName; /* customer's first name */
+        String customerLastName = currentCustomer.lName; /* customer's last name */
+
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, productId);
+            stmt.setInt(2, custId);
+            stmt.setDate(3, new java.sql.Date(dateOfPurchase.getTime()));
+            stmt.setString(4, customerFirstName);
+            stmt.setString(5, customerLastName);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
+        // Insert order details into the OrderDetails table
+        sql = "INSERT INTO OrderDetails (ProductID, CustID, DateOfPurchase, ProductName, ProductPrice, Quantity, TotalPrice, PaymentAmount, RefundAmount, TransactionHash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        int orderId = 1000;  // Your order ID, for 1000 orders
+        productId = 10000;
+        custId = 100;
+        dateOfPurchase = new Date();
+        int quantity = selectedProducts.size();  // Use the size of the selectedProducts list
+        double totalPrice = this.totalPrice;  // Your total price
+        boolean hasRefund = selectedProducts.size() > 1;
+
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            // Get the generated order ID
+            int generatedOrderId;
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    generatedOrderId = rs.getInt(1);
+                    System.out.println("Order ID: " + generatedOrderId);
+                } else {
+                    throw new SQLException("Creating order failed, no ID obtained.");
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+
+            stmt.setInt(1, orderId); // Your product ID
+            stmt.setInt(2, productId); // Your product ID
+            stmt.setInt(3, custId); // Your customer ID
+            stmt.setDate(4, new java.sql.Date(dateOfPurchase.getTime())); // Your date of purchase
+            stmt.setString(5, selectedProducts.get(0).getName()); // Assuming all products have the same name
+            stmt.setDouble(6, selectedProducts.get(0).getPrice()); // Assuming all products have the same price
+            stmt.setInt(7, quantity); // Quantity
+            stmt.setDouble(8, totalPrice); // Total price
+            stmt.setDouble(9, payment); // Payment amount
+            stmt.setDouble(10, (hasRefund) ? totalPrice - selectedProducts.get(0).getPrice() : 0.0); // Refund amount
+            stmt.setString(11, transaction.getHash()); // Transaction hash
+            stmt.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -416,18 +496,37 @@ public class Main3 {
                     ");";
             stmt.execute(createCustomerTable);
 
-            // SQL statement for creating another table (OrderDetails) with foreign key referencing Customer(CustID)
-            String createOrdersTable = "CREATE TABLE IF NOT EXISTS OrderDetails (" +
-                    "OrderID INT PRIMARY KEY, " +
+
+            // SQL statement for creating another table (Orders) with foreign key referencing Customer(CustID)
+            String createOrdersTable = "CREATE TABLE IF NOT EXISTS Orders (" +
+                    "OrderID INT PRIMARY KEY AUTO_INCREMENT, " +
                     "ProductID INT, " +
                     "CustID INT, " +
                     "DateOfPurchase DATE, " +
-                    "TotalPrice VARCHAR(255), " +
+                    "CustomerFirstName VARCHAR(255), " +
+                    "CustomerLastName VARCHAR(255), " +
+                    "FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID), " +
+                    "FOREIGN KEY (ProductID) REFERENCES BikeInventory(BikeID)" +
+                    ");";
+            stmt.execute(createOrdersTable);
+
+
+            // SQL statement for creating another table (OrderDetails) with foreign key referencing Customer(CustID)
+            String createOrderDetailsTable = "CREATE TABLE IF NOT EXISTS OrderDetails (" +
+                    "OrderID INT PRIMARY KEY AUTO_INCREMENT, " +
+                    "ProductID INT, " +
+                    "CustID INT, " +
+                    "DateOfPurchase DATE, " +
+                    "ProductName VARCHAR(255), " +
+                    "ProductPrice DOUBLE, " +
+                    "Quantity INT, " +
+                    "TotalPrice DOUBLE, " +
+                    "PaymentAmount DOUBLE, " +
+                    "RefundAmount DOUBLE, " +
+                    "TransactionHash VARCHAR(255), " +
                     "FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)" +
                     ");";
-            // Changed TotalPrice DECIMAL(10, 2) to VARCHAR(255) so that totalPrice is converted to a String and is read that way in MySQL
-            //Did not quite work
-            stmt.execute(createOrdersTable);
+            stmt.execute(createOrderDetailsTable);
 
             System.out.println("Tables created successfully");
 
@@ -441,8 +540,11 @@ public class Main3 {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 }
+
+
 
 
 

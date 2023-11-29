@@ -4,7 +4,7 @@
 -- DROP DATABASE KidsUsedBikeStore;
 
 -- Un-comment the statement below to actually create the KidsUsedBikeStore database
--- CREATE DATABASE KidsUsedBikeStore;
+CREATE DATABASE KidsUsedBikeStore;
 USE KidsUsedBikeStore;
 
 -- Drop the existing BikeInventory table if it exists
@@ -20,15 +20,15 @@ CREATE TABLE IF NOT EXISTS BikeInventory (
 );
 
 
--- Insert sample data into BikeInventory
+-- Optional: Insert sample data into BikeInventory
 INSERT INTO BikeInventory (BikeName, BikeCategory, Price) VALUES
-    ('(Trailcraft) Mountain Bike', 'MOUNTAIN_BIKE', 149.99),
-    ('(Marin) Road Bike', 'ROAD_BIKE', 129.99),
-    ('(AVASTA) BMX Bike', 'BMX_BIKE', 89.99),
-    ('(Firmstrong) Cruiser Bike', 'CRUISER_BIKE', 109.99);
+    ('Trailcraft', 'MOUNTAIN_BIKE', 149.99),
+    ('Marin', 'ROAD_BIKE', 129.99),
+    ('AVASTA', 'BMX_BIKE', 89.99),
+    ('Firmstrong', 'CRUISER_BIKE', 109.99);
 
 
-    -- Create CustomerDetails table
+-- Create CustomerDetails table
 CREATE TABLE IF NOT EXISTS CustomerDetails (
     CustID INT PRIMARY KEY AUTO_INCREMENT,
     FName VARCHAR(255),
@@ -40,27 +40,50 @@ CREATE TABLE IF NOT EXISTS CustomerDetails (
 
 
 -- Optional: Insert sample data into CustomerDetails
+-- Note: If you only want to insert one customer's sample data, then end the line with a ; not a , (or you will get an error)
 -- INSERT INTO CustomerDetails (FName, LName, EMail, Phone, Address) VALUES
-    -- ('John', 'Doe', 'john.doe01@example.com', '1234567890', '123 Main St'),
-    -- ('Jane', 'Doe', 'jane.doe02@example.com', '9876543210', '456 Oak St');
+    -- ('John', 'Doe', 'john.doe@example.com', '123-456-7890', '123 Main St');
+    -- ('Jane', 'Smith', 'jane.smith@example.com', '987-654-3210', '456 Oak St');
 
 
--- Create OrderDetails table
+-- Create Orders table with foreign key references
+CREATE TABLE IF NOT EXISTS Orders (
+    OrderID INT PRIMARY KEY AUTO_INCREMENT,
+    ProductID INT,
+    CustID INT,
+    DateOfPurchase DATE,
+    CustomerFirstName VARCHAR(255),
+    CustomerLastName VARCHAR(255),
+    FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID),
+    FOREIGN KEY (ProductID) REFERENCES BikeInventory(BikeID)
+);
+
+-- Insert sample data into Orders
+-- INSERT INTO Orders (ProductID, CustID, DateOfPurchase, CustomerFirstName, CustomerLastName) VALUES
+    -- (1, 1, '2023-11-22', 'John', 'Doe');
+    -- (2, 2, '2023-11-23', 'Jane', 'Smith');
+
+
+-- Create OrderDetails table with foreign key references
 CREATE TABLE IF NOT EXISTS OrderDetails (
     OrderID INT PRIMARY KEY AUTO_INCREMENT,
     ProductID INT,
     CustID INT,
     DateOfPurchase DATE,
-    TotalPrice VARCHAR(255),
-    -- Changed TotalPrice DECIMAL(10, 2) to VARCHAR(255) so that totalPrice is converted to a String and is read that way in MySQL
+    ProductName VARCHAR(255),
+    ProductPrice DECIMAL(10, 2),
+    Quantity INT,
+    TotalPrice DECIMAL(10, 2),
+    PaymentAmount DECIMAL(10, 2),
+    RefundAmount DECIMAL(10, 2),
+    TransactionHash VARCHAR(255),
     FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)
 );
 
-
--- Optional: Insert sample data into OrderDetails
--- INSERT INTO OrderDetails (ProductID, CustID, DateOfPurchase, TotalPrice) VALUES
-    -- (1, 1, '2023-11-22', 149.99),
-    -- (2, 2, '2023-11-22', 129.99);
+-- Insert sample data into OrderDetails
+-- INSERT INTO OrderDetails (ProductID, CustID, DateOfPurchase, ProductName, ProductPrice, Quantity, TotalPrice, PaymentAmount, RefundAmount, TransactionHash) VALUES
+    -- (1, 1, '2023-11-22', 'Trailcraft', 149.99, 1, 149.99, 150.00, 0.01, 'transaction_hash_1');
+    -- (2, 2, '2023-11-23', 'Marin', 129.99, 2, 259.98, 260.00, 0.02, 'transaction_hash_2');
 
 
 -- Check data in BikeInventory
@@ -69,7 +92,12 @@ SELECT * FROM BikeInventory;
 -- Check data in CustomerDetails
 SELECT * FROM CustomerDetails;
 
+-- Check data in Orders
+SELECT * FROM Orders;
+
 -- Check data in OrderDetails
 SELECT * FROM OrderDetails;
+
+
 
 
