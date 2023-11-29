@@ -3,7 +3,7 @@
 -- Use the statement below to discard a database that was already created
 -- DROP DATABASE KidsUsedBikeStore;
 
--- Un-comment the statement below to actually create the KidsUsedBikeStore database
+-- Un-comment the statement below to first create the KidsUsedBikeStore database
 CREATE DATABASE KidsUsedBikeStore;
 USE KidsUsedBikeStore;
 
