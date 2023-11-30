@@ -54,6 +54,7 @@ class Bike extends Product {
 // Interfaces: define an interface for database operations
 interface DatabaseOperations {
     void saveToDatabase();
+
     void retrieveFromDatabase();
 }
 
@@ -66,6 +67,11 @@ class Store implements DatabaseOperations {
     private final List<Customer> customers = new ArrayList<>();
     private final Blockchain blockchain = new Blockchain();
     private final Connection conn;
+    private int quantity = 0;
+    private final List<Product> selectedProducts = new ArrayList<>();
+
+    private int generatedOrderId = 1;
+    private int generatedCustomerId = 1;
 
 
     public int generatedProductId = 1;
@@ -78,43 +84,34 @@ class Store implements DatabaseOperations {
         inventory.add(new Bike("(AVASTA) BMX Bike", BikeCategory.BMX_BIKE, 89.99));
         inventory.add(new Bike("(Firmstrong) Cruiser Bike", BikeCategory.CRUISER_BIKE, 109.99));
         // Add bikes to the database
-        for (Product product : inventory) {
-            try {
-                PreparedStatement stmt = conn.prepareStatement("INSERT INTO BikeInventory (BikeName, BikeCategory, Price) VALUES (?, ?, ?)");
-                stmt.setString(1, product.getName());
-                if (product instanceof Bike) {
-                    stmt.setString(2, ((Bike) product).getCategory().toString());
-                }
-                stmt.setDouble(3, product.getPrice());
-                stmt.executeUpdate();
-
-
-                // Get the generated product ID
-                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        int generatedProductId = generatedKeys.getInt(1);
-                        System.out.println("Product ID: " + generatedProductId);
-                    } else {
-                        throw new SQLException("Creating product failed, no ID obtained.");
+        try {
+            // Use a batch insert to improve efficiency
+            String insertQuery = "INSERT INTO BikeInventory (BikeName, BikeCategory, Price) VALUES (?, ?, ?)";
+            try (PreparedStatement stmt = conn.prepareStatement(insertQuery)) {
+                for (Product product : inventory) {
+                    stmt.setString(1, product.getName());
+                    if (product instanceof Bike) {
+                        stmt.setString(2, ((Bike) product).getCategory().toString());
                     }
-
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                    stmt.setDouble(3, product.getPrice());
+                    stmt.addBatch();
                 }
-
-
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
+                // Execute the batch insert
+                stmt.executeBatch();
             }
-
+            // Commit the changes
+            conn.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle the exception as needed
         }
     }
-            public void welcome() {
+
+    public void welcome() {
         System.out.println("Welcome to the Used Bikes for Kids Store!");
         System.out.println("Sign Up Below");
     }
-    public int generatedCustomerId = 1;
-    public int generatedOrderId = 1;
+
     public void signUp() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter first name: ");
@@ -170,7 +167,9 @@ class Store implements DatabaseOperations {
         Scanner scanner = new Scanner(System.in);
         boolean continueShopping = true;
         Product selectedProduct = null;
-        List<Product> selectedProducts = new ArrayList<>();
+        Map<Product, Integer> selectedProducts = new HashMap<>();
+
+        //List<Product> selectedProducts = new ArrayList<>();
 
 
         while (continueShopping) {
@@ -181,15 +180,13 @@ class Store implements DatabaseOperations {
                 selectedProduct = inventory.get(choice - 1);
 
                 System.out.print("Enter the quantity: "); // The user is prompted to enter the quantity for each selected product
-                int quantity = scanner.nextInt();
+                quantity = scanner.nextInt();
 
                 totalPrice += selectedProduct.getPrice() * quantity; // The total price is calculated based on the product's price multiplied by the quantity.
 
                 // Add the selected product to the list with the specified quantity
-                for(int i = 0; i <quantity; i++){
-                    selectedProducts.add(selectedProduct);
+                selectedProducts.put(selectedProduct, quantity);
 
-                }
                 System.out.println("You've added " + quantity + " " + selectedProduct.getName() + "(s) to your cart.");
                 // Remove the selected product from the inventory
                 inventory.remove(choice - 1);
@@ -204,9 +201,10 @@ class Store implements DatabaseOperations {
         }
 
 
-
-        for (Product product : selectedProducts) {
-            System.out.println("Category: " + ((Bike) product).getCategory() + ", Price: $" + product.getPrice());
+        for (Map.Entry<Product, Integer> entry : selectedProducts.entrySet()) {
+            Product product = entry.getKey();
+            int quantity = entry.getValue();
+            System.out.println("Product: " + product.getName() + ", Quantity: " + quantity);
         }
         System.out.println("Total Price: $" + totalPrice);
         System.out.print("Enter the amount of cash you're paying with: $");
@@ -226,25 +224,28 @@ class Store implements DatabaseOperations {
             blockchain.addBlock(transaction);
 
             // Remove the purchased product from the database
-            // (Note: Adjust the logic based on the actual structure of your database)
-            try {
-                PreparedStatement stmt = conn.prepareStatement("DELETE FROM BikeInventory WHERE BikeName = ? AND BikeCategory = ? AND Price = ?");
-                stmt.setString(1, selectedProduct.getName());
-                if (selectedProduct instanceof Bike) {
-                    stmt.setString(2, ((Bike) selectedProduct).getCategory().toString());
-                }
-                stmt.setDouble(3, selectedProduct.getPrice()); // Convert price to string:  I did Double.toString(selectedProduct.getPrice()
-                stmt.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+
+//            try {
+//                PreparedStatement stmt = conn.prepareStatement("DELETE FROM BikeInventory WHERE BikeName = ? AND BikeCategory = ? AND Price = ?");
+//                stmt.setString(1, selectedProduct.getName());
+//                if (selectedProduct instanceof Bike) {
+//                    stmt.setString(2, ((Bike) selectedProduct).getCategory().toString());
+//                }
+//                stmt.setDouble(3, selectedProduct.getPrice()); // Convert price to string:  I did Double.toString(selectedProduct.getPrice()
+//                stmt.executeUpdate();
+//            } catch (SQLException e) {
+//                e.printStackTrace();
+//            }
             System.out.println("Thank you for shopping with us!");
             // Print receipt
             System.out.println("Receipt:");
             System.out.println("Customer: " + currentCustomer.getName());
             System.out.println("Email: " + currentCustomer.getEmail());
-            for (Product product : selectedProducts) {
+            for (Map.Entry<Product, Integer> entry : selectedProducts.entrySet()) {
+                Product product = entry.getKey();
+                int quantity = entry.getValue();
                 System.out.println("Product Purchased: " + product.getName());
+                System.out.println("Quantity: " + quantity);
                 System.out.println("Price: $" + product.getPrice());
             }
             System.out.println("Total Price: $" + totalPrice);
@@ -254,35 +255,69 @@ class Store implements DatabaseOperations {
         } else {
             System.out.println("Insufficient payment. Please pay the full amount.");
         }
-
-        Date dateOfPurchase = new Date();  // Your date of purchase
-        double totalPrice = this.totalPrice;  // Your total price
-        int orderId = generatedOrderId;
-        int custId = generatedCustomerId;
-        int productId = generatedProductId;
-        String sql = "INSERT INTO OrderDetails (OrderID, ProductID, CustID, DateOfPurchase, TotalPrice) VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setInt(1, orderId);
-            stmt.setInt(2, productId);
-            stmt.setInt(3, custId);
-            stmt.setDate(4, new java.sql.Date(dateOfPurchase.getTime()));
-            stmt.setDouble(5, totalPrice);
-            stmt.executeUpdate();
-            // Get the generated order ID
+        System.out.println("OrderID being used in OrderDetails: " + generatedOrderId);
+        Date dateOfPurchase = new Date();
+        String insertOrdersQuery = "INSERT INTO Orders ( ProductID, CustID, DateOfPurchase, TotalPrice) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement ordersStmt = conn.prepareStatement(insertOrdersQuery, Statement.RETURN_GENERATED_KEYS)) {
+            ordersStmt.setInt(1, 1); // Assuming ProductID 1 for simplicity
+            ordersStmt.setInt(2, generatedCustomerId); // Use the generated customer ID
+            ordersStmt.setDate(3, new java.sql.Date(dateOfPurchase.getTime())); // Using the current date
+            ordersStmt.setDouble(4, totalPrice);
+            ordersStmt.executeUpdate();
 
             // Get the generated order ID
-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+            try (ResultSet generatedKeys = ordersStmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    int generatedOrderId = generatedKeys.getInt(1);
-                    System.out.println("Order ID: " + generatedOrderId);
+                    int generatedOrderID = generatedKeys.getInt(1);
+                    System.out.println("Order ID: " + generatedOrderID);
+
+
                 } else {
                     throw new SQLException("Creating order failed, no ID obtained.");
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-     catch (SQLException e) {
-        e.printStackTrace();
+        // Your date of purchase
+        double totalPrice = this.totalPrice;  // Your total price
+        int orderId = generatedOrderId;
+        int custId = generatedCustomerId;
+        int productId = generatedProductId;
+        for (Map.Entry<Product, Integer> entry : selectedProducts.entrySet()) {
+            Product product = entry.getKey();
+            int quantity = entry.getValue();
+            String insertOrderDetailsQuery = "INSERT INTO OrderDetails (OrderID, ProductID, CustID, DateOfPurchase, Price ,Quantity, ProductName, THash) VALUES (?, ?, ?, ?,?,?,?,?)";
+            try (PreparedStatement orderDetailsStmt = conn.prepareStatement(insertOrderDetailsQuery, Statement.RETURN_GENERATED_KEYS)) {
+                orderDetailsStmt.setInt(1, generatedOrderId);
+                orderDetailsStmt.setInt(2, 1); // Assuming ProductID 1 for simplicity
+                orderDetailsStmt.setInt(3, custId);
+                orderDetailsStmt.setDate(4, new java.sql.Date(dateOfPurchase.getTime())); // Using the current date
+                orderDetailsStmt.setDouble(5, product.getPrice());
+                orderDetailsStmt.setInt(6, quantity);
+                orderDetailsStmt.setString(7, product.getName());
+                orderDetailsStmt.setString(8, transaction.getHash());
+
+
+                orderDetailsStmt.executeUpdate();
+
+                // Get the generated order ID
+                try (ResultSet generatedKeys = orderDetailsStmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int generatedOrderDetailID = generatedKeys.getInt(1);
+                        System.out.println("OrderDetails ID: " + generatedOrderDetailID);
+                    } else {
+                        throw new SQLException("Creating order details failed, no ID obtained.");
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
+        generatedOrderId++;
+        generatedCustomerId++;
+
+
     }
 
 
@@ -438,7 +473,7 @@ public class Main3 {
     public static void main(String[] args) {
         try {
             // Establish a connection
-            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root","SQLW@ta$h!#914"); // Use your own MySQL login name and password
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "123qwe"); // Use your own MySQL login name and password
 
             System.out.println("Connected to the database");
 
@@ -454,7 +489,6 @@ public class Main3 {
                     ");";
             stmt.execute(createBikeInventoryTable);
 
-
             // SQL statement for creating a new table (CustomerDetails)
             String createCustomerTable = "CREATE TABLE IF NOT EXISTS CustomerDetails (" +
                     "CustID INT PRIMARY KEY AUTO_INCREMENT, " +
@@ -466,8 +500,7 @@ public class Main3 {
                     ");";
             stmt.execute(createCustomerTable);
 
-            // SQL statement for creating another table (OrderDetails) with foreign key referencing Customer(CustID)
-            String createOrdersTable = "CREATE TABLE IF NOT EXISTS OrderDetails (" +
+            String createOrdersTable = "CREATE TABLE IF NOT EXISTS Orders (" +
                     "OrderID INT AUTO_INCREMENT PRIMARY KEY, " +
                     "ProductID INT, " +
                     "CustID INT, " +
@@ -475,16 +508,46 @@ public class Main3 {
                     "TotalPrice DOUBLE, " +
                     "FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)" +
                     ");";
+            stmt.execute(createOrdersTable);
+
+            // SQL statement for creating another table (OrderDetails) with foreign key referencing Customer(CustID)
+            String createOrdersDetailsTable = "CREATE TABLE IF NOT EXISTS OrderDetails (" +
+                    "OrderDetailID INT AUTO_INCREMENT PRIMARY KEY, " +
+                    "OrderID INT, " +
+                    "ProductID INT, " +
+                    "ProductName VARCHAR(255), " +
+                    "Quantity INT, " +
+                    "CustID INT, " +
+                    "DateOfPurchase DATE, " +
+                    "Price DECIMAL (10, 2), " +
+                    "THash VARCHAR(255)," +
+                    "FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID), " +
+                    "FOREIGN KEY (OrderID) REFERENCES Orders(OrderID)" +
+                    ");";
             // Changed TotalPrice DECIMAL(10, 2) to VARCHAR(255) so that totalPrice is converted to a String and is read that way in MySQL
             //Did not quite work
-            stmt.execute(createOrdersTable);
+            stmt.execute(createOrdersDetailsTable);
 
             System.out.println("Tables created successfully");
 
             Store store = new Store(conn);
-            store.welcome();
-            store.signUp();
-            store.shop();
+            boolean continueApp = true;
+            Scanner scanner = new Scanner(System.in);
+            while (continueApp) {
+                store.welcome();
+                store.signUp();
+                store.shop();
+
+                // Ask the user if they want to continue
+                System.out.print("Do you want to continue shopping? (yes/no): ");
+
+                String userResponse = scanner.nextLine().toLowerCase();
+
+                if (userResponse.equals("no")) {
+                    continueApp = false;
+                }
+
+            }
 
             // Closing Database Connection: The MySQL database connection is properly closed in the main method using conn.close()
             conn.close();

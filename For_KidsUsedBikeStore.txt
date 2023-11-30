@@ -4,11 +4,11 @@
 -- DROP DATABASE KidsUsedBikeStore;
 
 -- Un-comment the statement below to actually create the KidsUsedBikeStore database
--- CREATE DATABASE KidsUsedBikeStore;
+ CREATE DATABASE KidsUsedBikeStore;
 USE KidsUsedBikeStore;
 
 -- Drop the existing BikeInventory table if it exists
-DROP TABLE IF EXISTS BikeInventory;
+-- DROP TABLE IF EXISTS BikeInventory;
 
 
 -- Create the BikeInventory table
@@ -20,15 +20,14 @@ CREATE TABLE IF NOT EXISTS BikeInventory (
 );
 
 
+
 -- Insert sample data into BikeInventory
-INSERT INTO BikeInventory (BikeName, BikeCategory, Price) VALUES
-    ('(Trailcraft) Mountain Bike', 'MOUNTAIN_BIKE', 149.99),
-    ('(Marin) Road Bike', 'ROAD_BIKE', 129.99),
-    ('(AVASTA) BMX Bike', 'BMX_BIKE', 89.99),
-    ('(Firmstrong) Cruiser Bike', 'CRUISER_BIKE', 109.99);
-
-
-    -- Create CustomerDetails table
+-- INSERT INTO BikeInventory (BikeName, BikeCategory, Price) VALUES
+--     ('(Trailcraft) Mountain Bike', 'MOUNTAIN_BIKE', 149.99),
+--     ('(Marin) Road Bike', 'ROAD_BIKE', 129.99),
+--     ('(AVASTA) BMX Bike', 'BMX_BIKE', 89.99),
+--     ('(Firmstrong) Cruiser Bike', 'CRUISER_BIKE', 109.99);
+     -- Create CustomerDetails table
 CREATE TABLE IF NOT EXISTS CustomerDetails (
     CustID INT PRIMARY KEY AUTO_INCREMENT,
     FName VARCHAR(255),
@@ -37,6 +36,45 @@ CREATE TABLE IF NOT EXISTS CustomerDetails (
     Phone VARCHAR(255),
     Address VARCHAR(255)
 );
+-- Create OrderDetails table
+CREATE TABLE IF NOT EXISTS Orders (
+    OrderID INT PRIMARY KEY AUTO_INCREMENT,
+    ProductID INT,
+    CustID INT,
+    DateOfPurchase DATE,
+    TotalPrice DOUBLE,
+    FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)
+);
+-- Drop Orders table
+-- DROP TABLE IF EXISTS OrderDetails;
+-- DROP TABLE IF EXISTS Orders;
+-- Create Orders table
+CREATE TABLE IF NOT EXISTS OrderDetails (
+OrderDetailID INT PRIMARY KEY AUTO_INCREMENT,
+	OrderID INT,
+    CustID INT,
+    DateOfPurchase DATE,
+    Price DECIMAL(10, 2),
+    ProductID INT,
+    Quantity INT,
+    ProductName VARCHAR(255),
+    THash VARCHAR(255),
+    FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID),
+	FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
+	FOREIGN KEY (ProductID) REFERENCES BikeInventory(BikeID)
+
+
+);
+-- CREATE TABLE IF NOT EXISTS Orders (
+--     OrderID INT ,
+--     ProductID INT,
+--     CustID INT,
+--     OrderDate DATE,
+--     TotalPrice DOUBLE,
+--     Quantity INT,
+--     FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)
+-- );
+
 
 
 -- Optional: Insert sample data into CustomerDetails
@@ -45,16 +83,16 @@ CREATE TABLE IF NOT EXISTS CustomerDetails (
     -- ('Jane', 'Doe', 'jane.doe02@example.com', '9876543210', '456 Oak St');
 
 
--- Create OrderDetails table
-CREATE TABLE IF NOT EXISTS OrderDetails (
-    OrderID INT PRIMARY KEY AUTO_INCREMENT,
-    ProductID INT,
-    CustID INT,
-    DateOfPurchase DATE,
-    TotalPrice VARCHAR(255),
-    -- Changed TotalPrice DECIMAL(10, 2) to VARCHAR(255) so that totalPrice is converted to a String and is read that way in MySQL
-    FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)
-);
+
+-- CREATE TABLE IF NOT EXISTS OrderDetails (
+--     OrderID INT PRIMARY KEY AUTO_INCREMENT,
+--     ProductID INT,
+--     CustID INT,
+--     DateOfPurchase DATE,
+--     TotalPrice VARCHAR(255),
+--     -- Changed TotalPrice DECIMAL(10, 2) to VARCHAR(255) so that totalPrice is converted to a String and is read that way in MySQL
+--     FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID)
+-- );
 
 
 -- Optional: Insert sample data into OrderDetails
@@ -71,5 +109,8 @@ SELECT * FROM CustomerDetails;
 
 -- Check data in OrderDetails
 SELECT * FROM OrderDetails;
+
+-- Check data in Orders
+SELECT * FROM Orders
 
 
