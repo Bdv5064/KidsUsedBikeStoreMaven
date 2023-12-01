@@ -45,6 +45,7 @@ class Bike extends Product {
         return "Bike";
     }
 
+
     // Static Methods: add a static method to the Bike class
     public static void printBikeDetails(Bike bike) {
         System.out.println("Bike Details: " + bike.getName() + ", Category: " + bike.getCategory() + ", Price: $" + bike.getPrice());
@@ -257,12 +258,11 @@ class Store implements DatabaseOperations {
         }
         System.out.println("OrderID being used in OrderDetails: " + generatedOrderId);
         Date dateOfPurchase = new Date();
-        String insertOrdersQuery = "INSERT INTO Orders ( ProductID, CustID, DateOfPurchase, TotalPrice) VALUES (?, ?, ?, ?)";
+        String insertOrdersQuery = "INSERT INTO Orders ( CustID, DateOfPurchase, TotalPrice) VALUES ( ?, ?, ?)";
         try (PreparedStatement ordersStmt = conn.prepareStatement(insertOrdersQuery, Statement.RETURN_GENERATED_KEYS)) {
-            ordersStmt.setInt(1, 1); // Assuming ProductID 1 for simplicity
-            ordersStmt.setInt(2, generatedCustomerId); // Use the generated customer ID
-            ordersStmt.setDate(3, new java.sql.Date(dateOfPurchase.getTime())); // Using the current date
-            ordersStmt.setDouble(4, totalPrice);
+            ordersStmt.setInt(1, generatedCustomerId); // Use the generated customer ID
+            ordersStmt.setDate(2, new java.sql.Date(dateOfPurchase.getTime())); // Using the current date
+            ordersStmt.setDouble(3, totalPrice);
             ordersStmt.executeUpdate();
 
             // Get the generated order ID
@@ -284,13 +284,18 @@ class Store implements DatabaseOperations {
         int orderId = generatedOrderId;
         int custId = generatedCustomerId;
         int productId = generatedProductId;
+        int bikeID = 0;
         for (Map.Entry<Product, Integer> entry : selectedProducts.entrySet()) {
             Product product = entry.getKey();
             int quantity = entry.getValue();
+            if (product instanceof Bike) {
+                String bikeName = product.getName();
+                bikeID = getBikeIDFromDatabase(bikeName);
+            }
             String insertOrderDetailsQuery = "INSERT INTO OrderDetails (OrderID, ProductID, CustID, DateOfPurchase, Price ,Quantity, ProductName, THash) VALUES (?, ?, ?, ?,?,?,?,?)";
             try (PreparedStatement orderDetailsStmt = conn.prepareStatement(insertOrderDetailsQuery, Statement.RETURN_GENERATED_KEYS)) {
                 orderDetailsStmt.setInt(1, generatedOrderId);
-                orderDetailsStmt.setInt(2, 1); // Assuming ProductID 1 for simplicity
+                orderDetailsStmt.setInt(2, bikeID); // Assuming ProductID 1 for simplicity
                 orderDetailsStmt.setInt(3, custId);
                 orderDetailsStmt.setDate(4, new java.sql.Date(dateOfPurchase.getTime())); // Using the current date
                 orderDetailsStmt.setDouble(5, product.getPrice());
@@ -318,6 +323,21 @@ class Store implements DatabaseOperations {
         generatedCustomerId++;
 
 
+    }
+    private int getBikeIDFromDatabase(String bikeName) throws SQLException {
+        int bikeID = 0;
+        String query = "SELECT BikeID FROM BikeInventory WHERE BikeName = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, bikeName);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                if (resultSet.next()) {
+                    bikeID = resultSet.getInt("BikeID");
+                }
+            }
+        }
+
+        return bikeID;
     }
 
 
@@ -502,7 +522,6 @@ public class Main3 {
 
             String createOrdersTable = "CREATE TABLE IF NOT EXISTS Orders (" +
                     "OrderID INT AUTO_INCREMENT PRIMARY KEY, " +
-                    "ProductID INT, " +
                     "CustID INT, " +
                     "DateOfPurchase DATE, " +
                     "TotalPrice DOUBLE, " +
