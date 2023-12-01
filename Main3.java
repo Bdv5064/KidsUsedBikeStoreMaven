@@ -76,14 +76,18 @@ class Store implements DatabaseOperations {
 
 
     public int generatedProductId = 1;
-
-    public Store(Connection conn) throws SQLException {
-        this.conn = conn;
-        // Hardcode products into the inventory
+    private void initializeProducts() {
+        inventory.clear();
         inventory.add(new Bike("(Trailcraft) Mountain Bike", BikeCategory.MOUNTAIN_BIKE, 149.99));
         inventory.add(new Bike("(Marin) Road Bike", BikeCategory.ROAD_BIKE, 129.99));
         inventory.add(new Bike("(AVASTA) BMX Bike", BikeCategory.BMX_BIKE, 89.99));
         inventory.add(new Bike("(Firmstrong) Cruiser Bike", BikeCategory.CRUISER_BIKE, 109.99));
+    }
+
+    public Store(Connection conn) throws SQLException {
+        this.conn = conn;
+        // Hardcode products into the inventory
+        initializeProducts();
         // Add bikes to the database
         try {
             // Use a batch insert to improve efficiency
@@ -112,7 +116,10 @@ class Store implements DatabaseOperations {
         System.out.println("Welcome to the Used Bikes for Kids Store!");
         System.out.println("Sign Up Below");
     }
-
+    public void resetShoppingState() {
+        // Reset variables and processes related to shopping
+        totalPrice = 0.00;
+    }
     public void signUp() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter first name: ");
@@ -321,6 +328,7 @@ class Store implements DatabaseOperations {
         }
         generatedOrderId++;
         generatedCustomerId++;
+        initializeProducts();
 
 
     }
@@ -556,6 +564,8 @@ public class Main3 {
                 store.welcome();
                 store.signUp();
                 store.shop();
+                //Resets shopping state like price
+                store.resetShoppingState();
 
                 // Ask the user if they want to continue
                 System.out.print("Do you want to continue shopping? (yes/no): ");
