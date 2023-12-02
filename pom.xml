@@ -62,5 +62,5 @@
     </build>
 </project>
 
-<!-- Others may use the RELEASE version w/ compile scope -->
-<!-- W/ Maven 17, I use version 5.9.2 w/ test scope -->
+        <!-- Others may use the RELEASE version w/ compile scope -->
+        <!-- W/ Maven 17, I use version 5.9.2 w/ test scope -->

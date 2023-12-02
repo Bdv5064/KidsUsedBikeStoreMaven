@@ -2,8 +2,11 @@ import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 // Abstraction: define abstract class for the base type of all products
 abstract class Product {
@@ -76,6 +79,7 @@ class Store implements DatabaseOperations {
 
 
     public int generatedProductId = 1;
+
     private void initializeProducts() {
         inventory.clear();
         inventory.add(new Bike("(Trailcraft) Mountain Bike", BikeCategory.MOUNTAIN_BIKE, 149.99));
@@ -116,20 +120,45 @@ class Store implements DatabaseOperations {
         System.out.println("Welcome to the Used Bikes for Kids Store!");
         System.out.println("Sign Up Below");
     }
+
     public void resetShoppingState() {
         // Reset variables and processes related to shopping
         totalPrice = 0.00;
     }
+
     public void signUp() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter first name: ");
         String fName = scanner.nextLine();
         System.out.print("Enter last name: ");
         String lName = scanner.nextLine();
-        System.out.print("Enter email: ");
-        String email = scanner.nextLine();
-        System.out.print("Enter phone: ");
-        String phone = scanner.nextLine();
+
+
+        // Validate and prompt until a valid email is entered
+        String email;
+        while (true) {
+            System.out.print("Enter email: ");
+            email = scanner.nextLine();
+            if (isValidEmail(email)) {
+                break;
+            } else {
+                System.out.println("Invalid email format. Please enter a valid email.");
+            }
+        }
+
+        // Validate and prompt until a valid phone number is entered
+        String phone;
+        while (true) {
+            System.out.print("Enter phone (e.g., 123-456-7890): ");
+            phone = scanner.nextLine();
+            if (isValidPhone(phone)) {
+                break;
+            } else {
+                System.out.println("Invalid phone number format. Please enter a valid phone number.");
+            }
+        }
+
+
         System.out.print("Enter address: ");
         String address = scanner.nextLine();
 
@@ -164,6 +193,12 @@ class Store implements DatabaseOperations {
         System.out.println("Sign-up successful! Welcome, " + fName + "!");
     }
 
+    // Method to validate phone number format
+    private boolean isValidPhone(String phone) {
+        String phoneRegex = "\\d{3}-\\d{3}-\\d{4}";
+        return Pattern.matches(phoneRegex, phone);
+    }
+
     public void displayInventory() {
         System.out.println("Available Products:");
         for (int i = 0; i < inventory.size(); i++) {
@@ -171,14 +206,19 @@ class Store implements DatabaseOperations {
         }
     }
 
+    private boolean isValidEmail(String email) {
+        String emailRegex = "^[A-Za-z0-9+_.-]+@([A-Za-z0-9]+\\.)+[A-Za-z]{2,4}$";
+        Pattern pattern = Pattern.compile(emailRegex);
+        Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
+    }
+
+
     public void shop() throws SQLException {
         Scanner scanner = new Scanner(System.in);
         boolean continueShopping = true;
         Product selectedProduct = null;
         Map<Product, Integer> selectedProducts = new HashMap<>();
-
-        //List<Product> selectedProducts = new ArrayList<>();
-
 
         while (continueShopping) {
             displayInventory();
@@ -187,8 +227,18 @@ class Store implements DatabaseOperations {
             if (choice >= 1 && choice <= inventory.size()) {
                 selectedProduct = inventory.get(choice - 1);
 
-                System.out.print("Enter the quantity: "); // The user is prompted to enter the quantity for each selected product
-                quantity = scanner.nextInt();
+
+                // The user is prompted to enter the quantity for each selected product
+                // Validate and prompt until a valid quantity is entered
+                while (true) {
+                    System.out.print("Enter the quantity: ");
+                    quantity = scanner.nextInt();
+                    if (quantity > 0) {
+                        break;
+                    } else {
+                        System.out.println("Invalid quantity. Please enter a positive quantity.");
+                    }
+                }
 
                 totalPrice += selectedProduct.getPrice() * quantity; // The total price is calculated based on the product's price multiplied by the quantity.
 
@@ -231,19 +281,7 @@ class Store implements DatabaseOperations {
             transaction = new Block(0, null, null, null, 0.00);
             blockchain.addBlock(transaction);
 
-            // Remove the purchased product from the database
 
-//            try {
-//                PreparedStatement stmt = conn.prepareStatement("DELETE FROM BikeInventory WHERE BikeName = ? AND BikeCategory = ? AND Price = ?");
-//                stmt.setString(1, selectedProduct.getName());
-//                if (selectedProduct instanceof Bike) {
-//                    stmt.setString(2, ((Bike) selectedProduct).getCategory().toString());
-//                }
-//                stmt.setDouble(3, selectedProduct.getPrice()); // Convert price to string:  I did Double.toString(selectedProduct.getPrice()
-//                stmt.executeUpdate();
-//            } catch (SQLException e) {
-//                e.printStackTrace();
-//            }
             System.out.println("Thank you for shopping with us!");
             // Print receipt
             System.out.println("Receipt:");
@@ -256,15 +294,20 @@ class Store implements DatabaseOperations {
                 System.out.println("Quantity: " + quantity);
                 System.out.println("Price: $" + product.getPrice());
             }
-            System.out.println("Total Price: $" + totalPrice);
+            DecimalFormat df = new DecimalFormat("#.##"); // Format Total Price to two decimal places
+            System.out.println("Total Price: $" + df.format(totalPrice));
             System.out.println("Payment: $" + payment);
             System.out.println("Change: $" + change);
             System.out.println("Transaction Hash: " + transaction.getHash());
         } else {
             System.out.println("Insufficient payment. Please pay the full amount.");
         }
+
+
         System.out.println("OrderID being used in OrderDetails: " + generatedOrderId);
         Date dateOfPurchase = new Date();
+
+
         String insertOrdersQuery = "INSERT INTO Orders ( CustID, DateOfPurchase, TotalPrice) VALUES ( ?, ?, ?)";
         try (PreparedStatement ordersStmt = conn.prepareStatement(insertOrdersQuery, Statement.RETURN_GENERATED_KEYS)) {
             ordersStmt.setInt(1, generatedCustomerId); // Use the generated customer ID
@@ -332,6 +375,7 @@ class Store implements DatabaseOperations {
 
 
     }
+
     private int getBikeIDFromDatabase(String bikeName) throws SQLException {
         int bikeID = 0;
         String query = "SELECT BikeID FROM BikeInventory WHERE BikeName = ?";
@@ -501,7 +545,7 @@ public class Main3 {
     public static void main(String[] args) {
         try {
             // Establish a connection
-            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "123qwe"); // Use your own MySQL login name and password
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "SQL3f=uTj!S(.&_qPcwyn"); // Use your own MySQL login name and password
 
             System.out.println("Connected to the database");
 
@@ -551,8 +595,6 @@ public class Main3 {
                     "FOREIGN KEY (CustID) REFERENCES CustomerDetails(CustID), " +
                     "FOREIGN KEY (OrderID) REFERENCES Orders(OrderID)" +
                     ");";
-            // Changed TotalPrice DECIMAL(10, 2) to VARCHAR(255) so that totalPrice is converted to a String and is read that way in MySQL
-            //Did not quite work
             stmt.execute(createOrdersDetailsTable);
 
             System.out.println("Tables created successfully");
@@ -586,3 +628,6 @@ public class Main3 {
 
     }
 }
+
+
+

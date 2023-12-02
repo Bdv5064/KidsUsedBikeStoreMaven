@@ -1,6 +1,8 @@
 // Import the first two package classes and there associated dependencies, if need be
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -20,11 +22,12 @@ public class StoreTest {
     @BeforeEach
     public void setup() {
         try {
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "123qwe"); // Use your own MySQL login name and password
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "SQL3f=uTj!S(.&_qPcwyn"); // Use your own MySQL login name and password
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
     @Test
     public void testSignUp() throws SQLException {
         Store store = new Store(conn);
