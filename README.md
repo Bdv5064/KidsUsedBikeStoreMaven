@@ -4,7 +4,7 @@ Final Project - Used Kids Bike Store
 Welcome to the Used Bikes for Kids Store!
 This Java project is a simple terminal-based application for managing a store that sells used bikes.
 Customers can sign up, browse the inventory, shop for bikes, and complete transactions.
-The project also integrates with a MySQL database to store customer information, product details, and transaction history.
+The project also integrates with a MySQL database to store customer information, order details, and transaction history.
 
 Features
 1. Customer Sign-Up: New customers can sign up by providing their name, email, phone number, and address.
