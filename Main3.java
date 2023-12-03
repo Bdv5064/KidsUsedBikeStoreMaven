@@ -454,7 +454,9 @@ class Store implements DatabaseOperations {
             return email;
         }
 
-        // Overloading: overloaded constructor in the Customer class
+        /**
+         * Overloading: overloaded constructor in the Customer class
+         */
         public Customer(String fName, String lName, String email, String phone, String address) {
             this.fName = fName;
             this.lName = lName;
