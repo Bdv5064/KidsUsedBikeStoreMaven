@@ -1,4 +1,5 @@
-import java.io.*;
+
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
@@ -8,7 +9,9 @@ import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// Abstraction: define abstract class for the base type of all products
+/**
+ * Abstraction: define abstract class for the base type of all products
+ */
 abstract class Product {
     private final String name;
     private final double price;
@@ -17,8 +20,6 @@ abstract class Product {
         this.name = name;
         this.price = price;
     }
-
-    public abstract String getType();
 
     public String getName() {
         return name;
@@ -29,7 +30,9 @@ abstract class Product {
     }
 }
 
-// Inheritance: extend the Bike class from the Product class
+/**
+ * Inheritance: extend the Bike class from the Product class
+ */
 class Bike extends Product {
     private final BikeCategory category;
 
@@ -42,29 +45,32 @@ class Bike extends Product {
         return category;
     }
 
-    // Overriding: The getType() method is declared in the abstract class Product and overridden in the Bike class
-    @Override
-    public String getType() {
-        return "Bike";
-    }
 
-
-    // Static Methods: add a static method to the Bike class
-    public static void printBikeDetails(Bike bike) {
-        System.out.println("Bike Details: " + bike.getName() + ", Category: " + bike.getCategory() + ", Price: $" + bike.getPrice());
-    }
 }
 
-// Interfaces: define an interface for database operations
+/** Interfaces: define an interface for database operations
+ *
+ */
 interface DatabaseOperations {
-    void saveToDatabase();
 
-    void retrieveFromDatabase();
 }
+
 
 class Store implements DatabaseOperations {
+    /**
+     * Array Lists: modify the Store class to use ArrayList instead of a simple list
+     * @param inventory
+     * @param totalPrice
+     * @param currentCustomer
+     * @param customers
+     * @param blockchain
+     * @param conn
+     * @param quantity
+     * @param generatedOrderId
+     * @param generatedCustomerId
+     * @param generatedProductId
+     */
 
-    // Array Lists: modify the Store class to use ArrayList instead of a simple list
     private final List<Product> inventory = new ArrayList<>();
     private double totalPrice = 0.00;
     private Customer currentCustomer;
@@ -72,13 +78,10 @@ class Store implements DatabaseOperations {
     private final Blockchain blockchain = new Blockchain();
     private final Connection conn;
     private int quantity = 0;
-    private final List<Product> selectedProducts = new ArrayList<>();
 
     private int generatedOrderId = 1;
     private int generatedCustomerId = 1;
 
-
-    public int generatedProductId = 1;
 
     private void initializeProducts() {
         inventory.clear();
@@ -88,7 +91,7 @@ class Store implements DatabaseOperations {
         inventory.add(new Bike("(Firmstrong) Cruiser Bike", BikeCategory.CRUISER_BIKE, 109.99));
     }
 
-    public Store(Connection conn) throws SQLException {
+    public Store(Connection conn) {
         this.conn = conn;
         // Hardcode products into the inventory
         initializeProducts();
@@ -96,17 +99,29 @@ class Store implements DatabaseOperations {
         try {
             // Use a batch insert to improve efficiency
             String insertQuery = "INSERT INTO BikeInventory (BikeName, BikeCategory, Price) VALUES (?, ?, ?)";
-            try (PreparedStatement stmt = conn.prepareStatement(insertQuery)) {
+            String selectQuery = "SELECT COUNT(*) FROM BikeInventory WHERE BikeName = ? AND BikeCategory = ?";
+            try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
+                 PreparedStatement selectStmt = conn.prepareStatement(selectQuery)) {
                 for (Product product : inventory) {
-                    stmt.setString(1, product.getName());
                     if (product instanceof Bike) {
-                        stmt.setString(2, ((Bike) product).getCategory().toString());
+                        // Check if the bike already exists in the database
+                        selectStmt.setString(1, product.getName());
+                        selectStmt.setString(2, ((Bike) product).getCategory().toString());
+                        ResultSet rs = selectStmt.executeQuery();
+                        if (rs.next() && rs.getInt(1) > 0) {
+                            // Skip this bike if it already exists in the database
+                            continue;
+                        }
+
+                        // Add the bike to the batch insert
+                        insertStmt.setString(1, product.getName());
+                        insertStmt.setString(2, ((Bike) product).getCategory().toString());
+                        insertStmt.setDouble(3, product.getPrice());
+                        insertStmt.addBatch();
                     }
-                    stmt.setDouble(3, product.getPrice());
-                    stmt.addBatch();
                 }
                 // Execute the batch insert
-                stmt.executeBatch();
+                insertStmt.executeBatch();
             }
             // Commit the changes
             conn.commit();
@@ -114,6 +129,7 @@ class Store implements DatabaseOperations {
             e.printStackTrace();
             // Handle the exception as needed
         }
+
     }
 
     public void welcome() {
@@ -193,7 +209,9 @@ class Store implements DatabaseOperations {
         System.out.println("Sign-up successful! Welcome, " + fName + "!");
     }
 
-    // Method to validate phone number format
+    /**
+     * Method to validate phone number format
+     */
     private boolean isValidPhone(String phone) {
         String phoneRegex = "\\d{3}-\\d{3}-\\d{4}";
         return Pattern.matches(phoneRegex, phone);
@@ -217,7 +235,7 @@ class Store implements DatabaseOperations {
     public void shop() throws SQLException {
         Scanner scanner = new Scanner(System.in);
         boolean continueShopping = true;
-        Product selectedProduct = null;
+        Product selectedProduct;
         Map<Product, Integer> selectedProducts = new HashMap<>();
 
         while (continueShopping) {
@@ -228,8 +246,10 @@ class Store implements DatabaseOperations {
                 selectedProduct = inventory.get(choice - 1);
 
 
-                // The user is prompted to enter the quantity for each selected product
-                // Validate and prompt until a valid quantity is entered
+                /*
+                 The user is prompted to enter the quantity for each selected product
+                 Validate and prompt until a valid quantity is entered
+                */
                 while (true) {
                     System.out.print("Enter the quantity: ");
                     quantity = scanner.nextInt();
@@ -329,11 +349,8 @@ class Store implements DatabaseOperations {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        // Your date of purchase
-        double totalPrice = this.totalPrice;  // Your total price
-        int orderId = generatedOrderId;
+
         int custId = generatedCustomerId;
-        int productId = generatedProductId;
         int bikeID = 0;
         for (Map.Entry<Product, Integer> entry : selectedProducts.entrySet()) {
             Product product = entry.getKey();
@@ -351,6 +368,7 @@ class Store implements DatabaseOperations {
                 orderDetailsStmt.setDouble(5, product.getPrice());
                 orderDetailsStmt.setInt(6, quantity);
                 orderDetailsStmt.setString(7, product.getName());
+                assert transaction != null;
                 orderDetailsStmt.setString(8, transaction.getHash());
 
 
@@ -397,7 +415,7 @@ class Store implements DatabaseOperations {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Select the product you would like to return:");
         int returnChoice = scanner.nextInt();
-        Product returnedProduct = null;
+        Product returnedProduct;
 
         if (returnChoice >= 1 && returnChoice <= inventory.size()) {
             returnedProduct = inventory.get(returnChoice - 1);
@@ -408,24 +426,20 @@ class Store implements DatabaseOperations {
         }
     }
 
-    @Override
-    public void saveToDatabase() {
-        // Implement save logic
-        // (e.g., save the state of the store, inventory, customers, etc., to the database)
-    }
-
-    @Override
-    public void retrieveFromDatabase() {
-        // Implement retrieval logic
-        // (e.g., load the state of the store, inventory, customers, etc., from the database)
-    }
-
     public Object getCurrentCustomer() {
         return customers;
     }
 
     class Customer {
-        public String name;
+        /**
+         * @param fName
+         * @param lName
+         * @param email
+         * @param phone
+         * @param address
+         * @return
+         */
+
         public String fName;
         public String lName;
         public String email;
@@ -452,6 +466,11 @@ class Store implements DatabaseOperations {
 }
 
 class Blockchain {
+    /**
+     * @param chain
+     * @return
+     *
+     */
     private final List<Block> chain;
 
     public Blockchain() {
@@ -472,11 +491,24 @@ class Blockchain {
     }
 }
 
-// Hashing & Security: The Block class calculates a SHA-256 hash based on various data, demonstrating a basic form of hashing for security
+/**
+ * Hashing & Security: The Block class calculates an SHA-256 hash based on various data, demonstrating a basic form of hashing for security
+ */
 class Block {
+    /**
+     * @param customer
+     * @param index
+     * @param timestamp
+     * @param product
+     * @param totalPrice
+     * @param previousHash
+     * @param hash
+     * @return
+     *
+     */
     private final Store.Customer customer;
-    private int index;
-    private long timestamp;
+    private final int index;
+    private final long timestamp;
     private final Product product;
     private final double totalPrice;
     private String previousHash;
@@ -504,7 +536,7 @@ class Block {
                 String productName = (product != null) ? product.getName() : "";
                 double productPrice = (product != null) ? product.getPrice() : 0.0;
                 input = index + timestamp + previousHash + customerName + productName + productPrice + totalPrice + nonce;
-                byte[] hashBytes = digest.digest(input.getBytes("UTF-8"));
+                byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
                 StringBuilder hexString = new StringBuilder();
 
                 for (byte b : hashBytes) {
@@ -523,7 +555,7 @@ class Block {
                 // If not, increment the nonce and try again
                 nonce++;
             }
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+        } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
     }
@@ -542,10 +574,15 @@ class Block {
 }
 
 public class Main3 {
+    /**
+     *
+     * @param args
+     *
+     */
     public static void main(String[] args) {
         try {
             // Establish a connection
-            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "SQL3f=uTj!S(.&_qPcwyn"); // Use your own MySQL login name and password
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/KidsUsedBikeStore", "root", "SQLW@ta$h!#914"); // Use your own MySQL login name and password
 
             System.out.println("Connected to the database");
 
