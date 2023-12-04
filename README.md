@@ -1,7 +1,7 @@
 # KidsUsedBikeStoreMaven
 Final Project - Kids Used Bike Store
 
-Welcome to the Used Bikes for Kids Store!
+Welcome to the Kids Used Bike Store!
 This Java project is a simple terminal-based application for managing a store that sells used bikes.
 Customers can sign up, browse the inventory, shop for bikes, and complete transactions.
 The project also integrates with a MySQL database to store customer information, order details, and transaction history.
